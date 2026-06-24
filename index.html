@@ -89,10 +89,6 @@
                     <i class="fa-solid fa-fire text-amber-500"></i>
                     <span id="streak-count">0</span> 日連続
                 </div>
-                <span class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center gap-1.5 font-bold text-xs shadow-sm">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    API不要・快適オフライン
-                </span>
             </div>
         </div>
     </nav>
@@ -378,7 +374,7 @@
                     <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2">
                         <div class="text-[11px] text-purple-600 font-semibold flex items-center gap-1.5">
                             <i class="fa-solid fa-circle-info"></i>
-                            <span>保存すると、左側のカレンダーに王冠（👑）が一生残ります。</span>
+                            <span>保存すると、左側のカレンダーに王冠（👑）が残ります。</span>
                         </div>
                         <button onclick="triggerCeremony()" class="bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-300 hover:opacity-90 text-white font-extrabold text-xs px-6 py-3.5 rounded-2xl transition-all duration-300 transform active:scale-95 flex items-center justify-center gap-2 shadow-md shadow-purple-100">
                             👑 今日の成果をカレンダーに保存する
@@ -520,7 +516,7 @@
             currentDate: new Date(), // Selected Calendar Date
             todayDate: new Date(),   // System Today
             selectedMood: '😊',
-            todos: [],               // [{ id, text, completed, tag, repeat, start, end }]
+            todos: [],               // [{ id, text, completed, tag, repeat, start, end, date }]
             archive: {},             // { "YYYY-MM-DD": { mood, todos, journal, aiTitle, aiFeedback, savedAt } }
             streak: 0,
             lastSavedDateStr: ""     // YYYY-MM-DD
@@ -545,10 +541,11 @@
             
             // Starter tasks if empty
             if (state.todos.length === 0) {
+                const todayStr = formatDateKey(state.todayDate);
                 state.todos = [
-                    { id: 1, text: "今日のタスクを完了させてみる", completed: false, tag: "🌸重要", repeat: "none" },
-                    { id: 2, text: "ジャーナル（ひとこと日記）を書いてみる", completed: false, tag: "🍀習慣", repeat: "daily" },
-                    { id: 3, text: "カレンダーに本日の成果を「保存」する", completed: false, tag: "⭐快速", repeat: "none" }
+                    { id: 1, text: "今日のタスクを完了させてみる", completed: false, tag: "🌸重要", repeat: "none", date: todayStr },
+                    { id: 2, text: "ジャーナル（ひとこと日記）を書いてみる", completed: false, tag: "🍀習慣", repeat: "daily", date: todayStr },
+                    { id: 3, text: "カレンダーに本日の成果を「保存」する", completed: false, tag: "⭐快速", repeat: "none", date: todayStr }
                 ];
                 saveToLocalStorage();
                 renderTodos();
@@ -744,6 +741,8 @@
                         <span class="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-400 font-bold">ログなし</span>
                     `;
                 }
+                // 日付が変更されたため、タスク一覧を再描画する
+                renderTodos();
             }
         }
 
@@ -852,7 +851,8 @@
                 tag: tagSelect.value,
                 repeat: repeatSelect.value,
                 start: start,
-                end: end
+                end: end,
+                date: formatDateKey(state.currentDate) // 追加した時の「カレンダー選択日」に紐付ける
             };
 
             state.todos.push(newTask);
@@ -866,6 +866,135 @@
             renderTodos();
             playSound('add');
             showToast("📝 タスクを追加しました", "plus");
+        }
+
+        // --- STREAMING_CHUNK: Rendering Todo & Schedule Items with Date Matching... ---
+        function renderTodos() {
+            const taskList = document.getElementById('task-list');
+            const clearBtn = document.getElementById('clear-completed-btn');
+            const syncChecked = document.getElementById('toggle-timeline-sync').checked;
+            
+            if (!taskList) return;
+            taskList.innerHTML = '';
+
+            const selectedDateStr = formatDateKey(state.currentDate);
+            const selectedDayOfWeek = state.currentDate.getDay(); // 0:日, 1:月, ...
+
+            // 現在選択されている日付にマッチするタスク、または繰り返し習慣タスクのみをフィルタリング
+            let displayList = state.todos.filter(todo => {
+                // データの互換性のために、古いデータ等でdateプロパティがないものは本日日付とみなす
+                const taskDateStr = todo.date || formatDateKey(state.todayDate);
+
+                // 1) 繰り返し設定がない場合、登録された日とカレンダーの選択日が一致するもののみ表示
+                if (todo.repeat === 'none') {
+                    return taskDateStr === selectedDateStr;
+                }
+                
+                // 2) 毎日繰り返しの場合、タスクが作成された日以降のすべての日に表示
+                if (todo.repeat === 'daily') {
+                    return selectedDateStr >= taskDateStr;
+                }
+
+                // 3) 毎週繰り返しの場合、タスクが作成された日以降かつ、選択された日と作成日の曜日が同じ日のみ表示
+                if (todo.repeat === 'weekly') {
+                    if (selectedDateStr < taskDateStr) return false;
+                    const createdDate = new Date(taskDateStr.replace(/-/g, '/'));
+                    return createdDate.getDay() === selectedDayOfWeek;
+                }
+
+                return false;
+            });
+
+            if (!syncChecked) {
+                displayList = displayList.filter(todo => !todo.start);
+            }
+
+            if (displayList.length === 0) {
+                taskList.innerHTML = `
+                    <div class="text-center py-6 text-xs text-slate-400 italic font-semibold">
+                        登録されたTODOや予定はまだありません。
+                    </div>
+                `;
+                updateProgress(0, 0);
+                clearBtn.classList.add('hidden');
+                return;
+            }
+
+            // Check if any single completed task exists to toggle the manual sweep button
+            const anyCompletedOneTime = displayList.some(t => t.completed && t.repeat === 'none');
+            if (anyCompletedOneTime) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+
+            // Separate schedules (with start time) vs standard tasks, then sort schedule by timing
+            const schedules = displayList.filter(t => t.start).sort((a, b) => a.start.localeCompare(b.start));
+            const normalTasks = displayList.filter(t => !t.start);
+
+            // Re-combine: Schedule items on top (ordered by hours), then normal tasks
+            const sortedItems = [...schedules, ...normalTasks];
+
+            sortedItems.forEach(task => {
+                const item = document.createElement('div');
+                const badgeColorClass = tagStyles[task.tag] || "bg-purple-100 text-purple-700";
+                
+                // Color panel accent adjustments
+                let panelStyle = "bg-white border-purple-100 hover:border-purple-200";
+                if (task.completed) {
+                    panelStyle = "bg-emerald-50/40 border-emerald-200/50 text-slate-400";
+                } else if (task.start) {
+                    // Highlight timeline items with delicate light blue gradient
+                    panelStyle = "bg-gradient-to-r from-sky-50 to-white border-sky-100 hover:border-sky-200";
+                }
+
+                item.className = `flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-2xl border transition-all shadow-sm ${panelStyle} gap-2`;
+
+                // Render dynamic time layout label
+                const timeLabel = task.start 
+                    ? `<span class="px-2 py-0.5 bg-sky-100 text-sky-700 text-[10px] font-black rounded-lg mr-1"><i class="fa-regular fa-clock"></i> ${task.start}${task.end ? ' - ' + task.end : ''}</span>`
+                    : '';
+
+                const repeatLabel = task.repeat !== 'none'
+                    ? `<span class="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-black rounded-lg mr-1"><i class="fa-solid fa-repeat"></i> ${task.repeat === 'daily' ? '毎日' : '毎週'}</span>`
+                    : '';
+
+                item.innerHTML = `
+                    <div class="flex items-center gap-3 flex-1 cursor-pointer" onclick="toggleTask(${task.id})">
+                        <button type="button" class="w-5.5 h-5.5 rounded-lg flex items-center justify-center transition-all flex-shrink-0 ${
+                            task.completed 
+                                ? 'bg-emerald-400 text-white shadow-sm' 
+                                : 'border-2 border-purple-200 hover:border-purple-300 bg-white'
+                        }">
+                            ${task.completed ? '<i class="fa-solid fa-check text-[11px] font-bold"></i>' : ''}
+                        </button>
+                        <div class="flex flex-col">
+                            <span class="text-xs font-semibold leading-normal ${task.completed ? 'line-through text-slate-400' : 'text-slate-700'}">
+                                ${escapeHtml(task.text)}
+                            </span>
+                            <div class="flex flex-wrap gap-1 mt-1">
+                                ${timeLabel}
+                                ${repeatLabel}
+                                <span class="px-2 py-0.5 rounded-lg border text-[9px] font-black ${badgeColorClass}">${task.tag}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-end gap-1">
+                        <!-- Convert task/schedule hours quick button -->
+                        <button onclick="event.stopPropagation(); openEditor(${task.id})" class="text-slate-400 hover:text-purple-500 p-1.5 hover:bg-purple-100/50 rounded-xl transition-colors" title="詳細編集">
+                            <i class="fa-solid fa-pen text-xs"></i>
+                        </button>
+                        <button onclick="event.stopPropagation(); deleteTask(${task.id})" class="text-slate-400 hover:text-rose-400 p-1.5 hover:bg-rose-50 rounded-xl transition-colors" title="削除">
+                            <i class="fa-regular fa-trash-can text-xs"></i>
+                        </button>
+                    </div>
+                `;
+                taskList.appendChild(item);
+            });
+
+            const completedCount = displayList.filter(t => t.completed).length;
+            updateProgress(completedCount, displayList.length);
         }
 
         // --- STREAMING_CHUNK: Rendering Todo & Schedule Items... ---
