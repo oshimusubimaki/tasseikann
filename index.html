@@ -530,7 +530,7 @@
             "🧸お気楽": "bg-orange-100 border-orange-200 text-orange-700"
         };
 
-        // --- STREAMING_CHUNK: App Loading & Date Initializers... ---
+        // --- App Loading & Date Initializers ---
         window.onload = function() {
             loadFromLocalStorage();
             checkAndResetForNewDay();
@@ -580,7 +580,7 @@
             localStorage.setItem('ai_macaron_last_saved_date', state.lastSavedDateStr);
         }
 
-        // --- STREAMING_CHUNK: Handling New Day Auto Cleanups... ---
+        // --- Handling New Day Auto Cleanups ---
         function checkAndResetForNewDay() {
             const lastActive = localStorage.getItem('ai_macaron_last_active_day');
             const todayKey = formatDateKey(state.todayDate);
@@ -630,7 +630,7 @@
             }
         }
 
-        // --- STREAMING_CHUNK: Rendering the Calendar Days... ---
+        // --- Rendering the Calendar Days ---
         function renderCalendar() {
             const calendarDays = document.getElementById('calendar-days');
             const monthYearHeader = document.getElementById('calendar-month-year');
@@ -668,7 +668,7 @@
 
                 if (hasArchive) {
                     // Golden Honey gradient for saved crowns
-                    dayBtn.className += ' bg-gradient-to-tr from-[#fef08a] to-[#fde047] border-[#fde047] text-[#854d0e] hover:brightness-105 shadow-sm ';
+                    dayBtn.className += ' bg-gradient-to-tr from-[#fecdd3] to-[#fed7aa] border-[#fde047] text-[#854d0e] hover:brightness-105 shadow-sm ';
                 } else if (isToday) {
                     // Soft pink for active system today
                     dayBtn.className += ' bg-[#fff5f6] border-[#ffccd5] text-[#db2777] hover:bg-[#ffe4e6] ';
@@ -715,7 +715,7 @@
             document.getElementById('stats-tasks').innerHTML = `${totalTasks} <span class="text-xs text-slate-400 font-bold">個</span>`;
         }
 
-        // --- STREAMING_CHUNK: Date Selector Action... ---
+        // --- Date Selector Action ---
         function selectDate(date) {
             state.currentDate = date;
             renderCalendar();
@@ -805,7 +805,7 @@
             });
         }
 
-        // --- STREAMING_CHUNK: Managing Todo / Schedule Addition... ---
+        // --- Managing Todo / Schedule Addition ---
         function addTask(event) {
             event.preventDefault();
             const input = document.getElementById('new-task-input');
@@ -868,7 +868,7 @@
             showToast("📝 タスクを追加しました", "plus");
         }
 
-        // --- STREAMING_CHUNK: Rendering Todo & Schedule Items with Date Matching... ---
+        // --- Rendering Todo & Schedule Items with Date Matching ---
         function renderTodos() {
             const taskList = document.getElementById('task-list');
             const clearBtn = document.getElementById('clear-completed-btn');
@@ -882,7 +882,6 @@
 
             // 現在選択されている日付にマッチするタスク、または繰り返し習慣タスクのみをフィルタリング
             let displayList = state.todos.filter(todo => {
-                // データの互換性のために、古いデータ等でdateプロパティがないものは本日日付とみなす
                 const taskDateStr = todo.date || formatDateKey(state.todayDate);
 
                 // 1) 繰り返し設定がない場合、登録された日とカレンダーの選択日が一致するもののみ表示
@@ -923,6 +922,7 @@
             // Check if any single completed task exists to toggle the manual sweep button
             const anyCompletedOneTime = displayList.some(t => t.completed && t.repeat === 'none');
             if (anyCompletedOneTime) {
+                clearBtn.classList.remove('shadow-sm');
                 clearBtn.classList.remove('hidden');
             } else {
                 clearBtn.classList.add('hidden');
@@ -997,110 +997,7 @@
             updateProgress(completedCount, displayList.length);
         }
 
-        // --- STREAMING_CHUNK: Rendering Todo & Schedule Items... ---
-        function renderTodos() {
-            const taskList = document.getElementById('task-list');
-            const clearBtn = document.getElementById('clear-completed-btn');
-            const syncChecked = document.getElementById('toggle-timeline-sync').checked;
-            
-            if (!taskList) return;
-            taskList.innerHTML = '';
-
-            // Filter items based on user synchronization options
-            let displayList = state.todos;
-            if (!syncChecked) {
-                displayList = state.todos.filter(todo => !todo.start);
-            }
-
-            if (displayList.length === 0) {
-                taskList.innerHTML = `
-                    <div class="text-center py-6 text-xs text-slate-400 italic font-semibold">
-                        登録されたTODOや予定はまだありません。
-                    </div>
-                `;
-                updateProgress(0, 0);
-                clearBtn.classList.add('hidden');
-                return;
-            }
-
-            // Check if any single completed task exists to toggle the manual sweep button
-            const anyCompletedOneTime = state.todos.some(t => t.completed && t.repeat === 'none');
-            if (anyCompletedOneTime) {
-                clearBtn.classList.remove('hidden');
-            } else {
-                clearBtn.classList.add('hidden');
-            }
-
-            // Separate schedules (with start time) vs standard tasks, then sort schedule by timing
-            const schedules = displayList.filter(t => t.start).sort((a, b) => a.start.localeCompare(b.start));
-            const normalTasks = displayList.filter(t => !t.start);
-
-            // Re-combine: Schedule items on top (ordered by hours), then normal tasks
-            const sortedItems = [...schedules, ...normalTasks];
-
-            sortedItems.forEach(task => {
-                const item = document.createElement('div');
-                const badgeColorClass = tagStyles[task.tag] || "bg-purple-100 text-purple-700";
-                
-                // Color panel accent adjustments
-                let panelStyle = "bg-white border-purple-100 hover:border-purple-200";
-                if (task.completed) {
-                    panelStyle = "bg-emerald-50/40 border-emerald-200/50 text-slate-400";
-                } else if (task.start) {
-                    // Highlight timeline items with delicate light blue gradient
-                    panelStyle = "bg-gradient-to-r from-sky-50 to-white border-sky-100 hover:border-sky-200";
-                }
-
-                item.className = `flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-2xl border transition-all shadow-sm ${panelStyle} gap-2`;
-
-                // Render dynamic time layout label
-                const timeLabel = task.start 
-                    ? `<span class="px-2 py-0.5 bg-sky-100 text-sky-700 text-[10px] font-black rounded-lg mr-1"><i class="fa-regular fa-clock"></i> ${task.start}${task.end ? ' - ' + task.end : ''}</span>`
-                    : '';
-
-                const repeatLabel = task.repeat !== 'none'
-                    ? `<span class="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-black rounded-lg mr-1"><i class="fa-solid fa-repeat"></i> ${task.repeat === 'daily' ? '毎日' : '毎週'}</span>`
-                    : '';
-
-                item.innerHTML = `
-                    <div class="flex items-center gap-3 flex-1 cursor-pointer" onclick="toggleTask(${task.id})">
-                        <button type="button" class="w-5.5 h-5.5 rounded-lg flex items-center justify-center transition-all flex-shrink-0 ${
-                            task.completed 
-                                ? 'bg-emerald-400 text-white shadow-sm' 
-                                : 'border-2 border-purple-200 hover:border-purple-300 bg-white'
-                        }">
-                            ${task.completed ? '<i class="fa-solid fa-check text-[11px] font-bold"></i>' : ''}
-                        </button>
-                        <div class="flex flex-col">
-                            <span class="text-xs font-semibold leading-normal ${task.completed ? 'line-through text-slate-400' : 'text-slate-700'}">
-                                ${escapeHtml(task.text)}
-                            </span>
-                            <div class="flex flex-wrap gap-1 mt-1">
-                                ${timeLabel}
-                                ${repeatLabel}
-                                <span class="px-2 py-0.5 rounded-lg border text-[9px] font-black ${badgeColorClass}">${task.tag}</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-center justify-end gap-1">
-                        <!-- Convert task/schedule hours quick button -->
-                        <button onclick="event.stopPropagation(); openEditor(${task.id})" class="text-slate-400 hover:text-purple-500 p-1.5 hover:bg-purple-100/50 rounded-xl transition-colors" title="詳細編集">
-                            <i class="fa-solid fa-pen text-xs"></i>
-                        </button>
-                        <button onclick="event.stopPropagation(); deleteTask(${task.id})" class="text-slate-400 hover:text-rose-400 p-1.5 hover:bg-rose-50 rounded-xl transition-colors" title="削除">
-                            <i class="fa-regular fa-trash-can text-xs"></i>
-                        </button>
-                    </div>
-                `;
-                taskList.appendChild(item);
-            });
-
-            const completedCount = state.todos.filter(t => t.completed).length;
-            updateProgress(completedCount, state.todos.length);
-        }
-
-        // --- STREAMING_CHUNK: Managing Progress Updates & Sound Triggers... ---
+        // --- Managing Progress Updates & Sound Triggers ---
         function toggleTask(id) {
             state.todos = state.todos.map(task => {
                 if (task.id === id) {
@@ -1144,7 +1041,7 @@
             document.getElementById('todo-progress-text').textContent = `完了 ${completed} / ${total}`;
         }
 
-        // --- STREAMING_CHUNK: Editing Tasks Inline... ---
+        // --- Editing Tasks Inline ---
         function openEditor(id) {
             const task = state.todos.find(t => t.id === id);
             if (!task) return;
@@ -1161,6 +1058,7 @@
             editor.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
+        // --- Close Editor ---
         function closeEditor() {
             document.getElementById('inline-editor').classList.add('hidden');
         }
@@ -1196,7 +1094,7 @@
             showToast("📝 タスクを更新しました", "plus");
         }
 
-        // --- STREAMING_CHUNK: Handling Historical Ceremonies... ---
+        // --- Handling Historical Ceremonies ---
         function triggerCeremony() {
             const journalText = document.getElementById('today-journal-input').value.trim();
             const completedTasks = state.todos.filter(t => t.completed);
@@ -1246,7 +1144,7 @@
                 feedbackResult.classList.remove('hidden');
 
                 playSound('crown');
-                showToast("👑 今日の成果をカレンダーに永続保存しました！", "crown");
+                showToast("👑 今日の成果をカレンダーに保存しました！", "crown");
                 triggerConfettiCelebrate();
                 feedbackResult.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
@@ -1292,7 +1190,7 @@
             return { title, feedback };
         }
 
-        // --- STREAMING_CHUNK: Helpers and Chime Animators... ---
+        // --- Helpers and Chime Animators ---
         function formatDateKey(date) {
             const y = date.getFullYear();
             const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -1353,6 +1251,7 @@
             });
         }
 
+        // Complete Confetti Celebration
         function triggerConfettiCelebrate() {
             var duration = 2 * 1000;
             var end = Date.now() + duration;
