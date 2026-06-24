@@ -360,7 +360,7 @@
                 </div>
 
                 <!-- 1日の終わりのふりかえり・締めくくり -->
-                <div class="glass-panel-purple rounded-3xl p-6 space-y-4 border border-pink-200">
+                <div id="journal-section" class="glass-panel-purple rounded-3xl p-6 space-y-4 border border-pink-200">
                     <h3 class="font-bold text-purple-800 flex items-center gap-2">
                         <i class="fa-solid fa-pen-fancy text-purple-500"></i>
                         今日の締めくくり・ジャーナル
@@ -550,6 +550,14 @@
                 saveToLocalStorage();
                 renderTodos();
             }
+
+            document.getElementById('today-journal-input').addEventListener('input', (e) => {
+                const todayKey = formatDateKey(state.todayDate);
+                // 今日がまだ保存されていない場合のみ下書きを一時保存
+                if (!state.archive[todayKey]) {
+                    localStorage.setItem('ai_macaron_temp_draft', e.target.value);
+                }
+            });
         };
 
         // --- LocalStorage persistence ---
@@ -727,6 +735,8 @@
             if (dateKey === todayKey) {
                 hideArchiveView(); // 「過去アーカイブ呼び出し中」表示を必ず閉じる
                 document.getElementById('today-workspace').classList.remove('hidden');
+                document.getElementById('journal-section').classList.remove('hidden'); // 本日のジャーナルエリアを表示
+                
                 document.getElementById('current-work-date').innerHTML = `
                     ${formatDateString(date)}
                     <span class="text-xs px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-500 border border-purple-200 font-bold">今日</span>
@@ -740,7 +750,9 @@
                         setMood(state.archive[dateKey].mood);
                     }
                 } else {
-                    // まだ保存していない場合はAI結果を非表示にする
+                    // まだ保存していない場合は、一時保存されている下書きを自動復元する
+                    const tempDraft = localStorage.getItem('ai_macaron_temp_draft') || '';
+                    document.getElementById('today-journal-input').value = tempDraft;
                     document.getElementById('ai-feedback-result').classList.add('hidden');
                 }
                 renderTodos();
@@ -754,6 +766,8 @@
                     // ログがない過去・未来の日の場合は、通常のワークスペースを「ログなし」として表示
                     hideArchiveView();
                     document.getElementById('today-workspace').classList.remove('hidden');
+                    document.getElementById('journal-section').classList.add('hidden'); // 今日以外（ログなし）はジャーナルエリアを非表示
+                    
                     document.getElementById('current-work-date').innerHTML = `
                         ${formatDateString(date)}
                         <span class="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-400 font-bold">ログなし</span>
@@ -1142,6 +1156,9 @@
                     aiFeedback: response.feedback,
                     savedAt: nowStr
                 };
+
+                // 一時下書きデータをクリア
+                localStorage.removeItem('ai_macaron_temp_draft');
 
                 // Advance Streak logic (only once per day)
                 if (state.lastSavedDateStr !== todayKey) {
