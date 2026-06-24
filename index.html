@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AuraFlow - カラフルパステルAIジャーナル</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap');
+        
+        body {
+            font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
+            background: linear-gradient(135deg, #fff0f5 0%, #f0f8ff 50%, #f5fffa 100%); /* サクラピンク・アリスブルー・ミントグリーンの3色グラデーション */
+            color: #334155; /* スモーキーチャコール */
+        }
+        
+        /* ぷるんとした質感のシャーベットガラスパネル */
+        .glass-panel-blue {
+            background: rgba(240, 249, 255, 0.8); /* ベビーブルー */
+            backdrop-filter: blur(12px);
+            border: 2px solid rgba(186, 230, 253, 0.6);
+            box-shadow: 0 8px 30px -5px rgba(186, 230, 253, 0.3);
+        }
+
+        .glass-panel-yellow {
+            background: rgba(254, 252, 226, 0.8); /* シトロンイエロー */
+            backdrop-filter: blur(12px);
+            border: 2px solid rgba(254, 240, 138, 0.6);
+            box-shadow: 0 8px 30px -5px rgba(254, 240, 138, 0.3);
+        }
+
+        .glass-panel-purple {
+            background: rgba(250, 245, 255, 0.85); /* ラベンダーパープル */
+            backdrop-filter: blur(12px);
+            border: 2px solid rgba(233, 213, 255, 0.6);
+            box-shadow: 0 10px 30px -8px rgba(216, 180, 254, 0.35);
+        }
+
+        /* アニメーション関連 */
+        .animate-bounce-subtle {
+            animation: bounceSubtle 2s infinite ease-in-out;
+        }
+
+        @keyframes bounceSubtle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+
+        /* スクロールバーのカスタマイズ */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.5);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(216, 180, 254, 0.5);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(192, 132, 252, 0.7);
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-12">
+
+    <!-- ナビゲーションバー -->
+    <nav class="bg-white/60 backdrop-blur-md sticky top-0 z-40 border-b border-pink-100/60 px-4 py-3.5 mb-6">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-pink-300 via-purple-300 to-indigo-300 flex items-center justify-center shadow-md shadow-purple-200">
+                    <i class="fa-solid fa-crown text-white text-lg animate-bounce-subtle"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-black tracking-tight bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent">AuraFlow</h1>
+                    <p class="text-[10px] text-purple-400 font-bold uppercase tracking-wider">Macaron & Candy Self-Care Log</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 text-sm">
+                <!-- Streak flame -->
+                <div class="flex items-center gap-1 bg-amber-50 border border-amber-200/60 text-amber-600 px-3 py-1 rounded-full text-xs font-bold shadow-sm">
+                    <i class="fa-solid fa-fire text-amber-500"></i>
+                    <span id="streak-count">0</span> 日連続
+                </div>
+                <span class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center gap-1.5 font-bold text-xs shadow-sm">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    API不要・快適オフライン
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- 左サイド：カレンダー ＆ これまでの軌跡 (4/12) -->
+        <div class="lg:col-span-4 space-y-6">
+            <!-- カレンダーコンポーネント (ベビーブルー) -->
+            <div class="glass-panel-blue rounded-3xl p-5">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="font-bold text-sky-800 flex items-center gap-2">
+                        <i class="fa-regular fa-calendar-star text-sky-500"></i>
+                        がんばりの足跡
+                    </h2>
+                    <div class="text-xs text-sky-700 font-bold bg-white/80 px-2.5 py-1 rounded-xl shadow-sm border border-sky-100" id="calendar-month-year">2026年 6月</div>
+                </div>
+                
+                <!-- カレンダーグリッド -->
+                <div class="grid grid-cols-7 gap-1 text-center text-[11px] text-sky-400 font-bold mb-2">
+                    <div class="text-rose-400">日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div class="text-sky-400">土</div>
+                </div>
+                <div class="grid grid-cols-7 gap-1.5" id="calendar-days">
+                    <!-- JSで動的にカレンダーの日付と「王冠」ステータスを生成 -->
+                </div>
+                
+                <div class="mt-4 pt-3.5 border-t border-sky-200/50 flex items-center justify-between text-[11px] text-sky-600/80 font-bold">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-5 h-5 rounded-lg bg-gradient-to-tr from-amber-200 to-yellow-100 border border-amber-300 flex items-center justify-center text-[10px] shadow-sm">👑</span>
+                        <span>成果保存ずみ</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-purple-400"></span>
+                        <span>選択中の日</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- クイック統計 (シトロンイエロー) -->
+            <div class="glass-panel-yellow rounded-3xl p-5">
+                <h3 class="font-bold text-xs text-yellow-700 mb-3 flex items-center gap-1.5">
+                    <i class="fa-solid fa-chart-line text-yellow-500"></i>
+                    今月の成長サマリー
+                </h3>
+                <div class="grid grid-cols-2 gap-3 text-center">
+                    <div class="bg-white/80 border border-yellow-200/40 rounded-2xl p-3 shadow-sm">
+                        <div class="text-[10px] text-yellow-600 font-bold">獲得した王冠</div>
+                        <div class="text-xl font-black text-amber-600 mt-1" id="stats-crowns">0 <span class="text-xs text-slate-400 font-medium">個</span></div>
+                    </div>
+                    <div class="bg-white/80 border border-yellow-200/40 rounded-2xl p-3 shadow-sm">
+                        <div class="text-[10px] text-yellow-600 font-bold">累計完了タスク</div>
+                        <div class="text-xl font-black text-emerald-600 mt-1" id="stats-tasks">0 <span class="text-xs text-slate-400 font-medium">個</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右メイン：本日のタスク ＆ ふりかえりワークスペース (8/12) -->
+        <div class="lg:col-span-8 space-y-6">
+
+            <!-- 過去アーカイブ表示エリア（過去の日を選択した時に自動で出現） -->
+            <div id="archive-view" class="hidden bg-gradient-to-tr from-[#fdf4ff] via-[#fae8ff] to-[#f5f3ff] border-2 border-purple-200 rounded-3xl p-6 shadow-xl relative overflow-hidden">
+                <div class="absolute -right-8 -top-8 w-32 h-32 bg-purple-200/30 rounded-full blur-2xl"></div>
+                <div class="flex justify-between items-start mb-4">
+                    <span class="px-3 py-1 rounded-full bg-purple-100 text-purple-700 border border-purple-200 text-xs font-bold flex items-center gap-1.5 shadow-sm">
+                        👑 過去のアーカイブを呼び出し中
+                    </span>
+                    <button onclick="backToToday()" class="text-xs font-bold text-slate-500 hover:text-slate-800 bg-white border border-slate-200 hover:border-slate-300 px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 shadow-sm">
+                        今日に戻る <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+                <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2 mb-2">
+                    <span id="archive-date-title" class="text-purple-600">2026年6月22日</span> のふりかえり
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <!-- 左カラム：タスクと日記 -->
+                    <div class="space-y-4">
+                        <div class="bg-white/80 rounded-2xl p-4 border border-purple-100 shadow-sm">
+                            <h4 class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-1"><i class="fa-solid fa-check text-emerald-400"></i> やり遂げたこと</h4>
+                            <ul class="space-y-2 text-xs text-slate-600 font-medium" id="archive-tasks">
+                                <!-- タスクリスト -->
+                            </ul>
+                        </div>
+                        <div class="bg-white/80 rounded-2xl p-4 border border-purple-100 shadow-sm">
+                            <h4 class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-1"><i class="fa-solid fa-book-open text-sky-400"></i> この日のひとこと・日記</h4>
+                            <p class="text-xs text-slate-600 leading-relaxed italic" id="archive-diary">
+                                「今日は少し疲れていたけれど、タスクを終わらせることができて良かった。」
+                            </p>
+                        </div>
+                    </div>
+                    <!-- 右カラム：AIコーチのフィードバック -->
+                    <div class="bg-purple-50/50 border border-purple-100 rounded-2xl p-4 flex flex-col justify-between shadow-sm">
+                        <div>
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="w-6 h-6 rounded-lg bg-purple-100 border border-purple-200 flex items-center justify-center text-xs text-purple-700 font-bold">AI</span>
+                                <span class="text-xs font-bold text-purple-600">AIコーチから贈られた称号</span>
+                            </div>
+                            <div class="text-sm font-bold text-purple-800 bg-white/85 border border-purple-200/50 px-2.5 py-1.5 rounded-xl inline-block mb-3" id="archive-title-badge">🏆 【限界突破の開拓者】</div>
+                            <p class="text-xs text-slate-500 font-medium leading-relaxed" id="archive-coach-feedback">
+                                あなたの素晴らしい集中力とコミットメントによって、タスクは見事に消化されました。この調子で一歩一歩進んでいきましょう！
+                            </p>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-purple-100/50 flex items-center justify-between text-[11px] text-slate-400 font-semibold">
+                            <span>気分の記録: <span id="archive-emoji" class="text-sm">😊</span></span>
+                            <span>保存日時: <span id="archive-saved-time">2026/06/23 21:00</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- メインワークエリア（今日の日付、または新規ふりかえり用） -->
+            <div id="today-workspace" class="space-y-6">
+                <!-- 日付ヘッダーと今日のモチベーション -->
+                <div class="glass-panel-purple rounded-3xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <div class="text-[10px] text-purple-400 font-bold uppercase tracking-widest mb-1">Current Workspace</div>
+                        <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2" id="current-work-date">
+                            2026年 6月 23日 (火)
+                            <span class="text-xs px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-500 border border-purple-200 font-bold">今日</span>
+                        </h2>
+                    </div>
+                    <!-- 気分セレクト -->
+                    <div class="flex items-center gap-2 bg-white/60 p-1 rounded-2xl border border-purple-100">
+                        <span class="text-[10px] text-slate-500 px-2 font-bold">今日の気分:</span>
+                        <div class="flex gap-1" id="mood-selectors">
+                            <button onclick="setMood('😊')" class="mood-btn w-8 h-8 rounded-xl flex items-center justify-center hover:bg-purple-100 transition-all text-sm border border-transparent" data-mood="😊" title="普通/良好">😊</button>
+                            <button onclick="setMood('🔥')" class="mood-btn w-8 h-8 rounded-xl flex items-center justify-center hover:bg-purple-100 transition-all text-sm border border-transparent" data-mood="🔥" title="絶好調/情熱的">🔥</button>
+                            <button onclick="setMood('😴')" class="mood-btn w-8 h-8 rounded-xl flex items-center justify-center hover:bg-purple-100 transition-all text-sm border border-transparent" data-mood="😴" title="お疲れ/眠い">😴</button>
+                            <button onclick="setMood('🌱')" class="mood-btn w-8 h-8 rounded-xl flex items-center justify-center hover:bg-purple-100 transition-all text-sm border border-transparent" data-mood="🌱" title="穏やか/リセット">🌱</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 統合タスク管理セクション -->
+                <div class="glass-panel-purple rounded-3xl p-6 space-y-4">
+                    <div class="flex justify-between items-center border-b border-purple-100 pb-3">
+                        <h3 class="font-bold text-purple-800 flex items-center gap-2">
+                            <i class="fa-solid fa-list-check"></i>
+                            本日のTODO＆スケジュール
+                        </h3>
+                        <div class="flex items-center gap-2">
+                            <!-- Show timeline toggles -->
+                            <div class="flex items-center gap-1.5 bg-white/70 px-2.5 py-1 rounded-lg border border-purple-100 text-xs">
+                                <input type="checkbox" id="toggle-timeline-sync" class="rounded text-purple-500 focus:ring-purple-400" checked onchange="renderTodos()">
+                                <label for="toggle-timeline-sync" class="text-[10px] text-slate-500 font-bold cursor-pointer">🕒 予定もTODOに表示</label>
+                            </div>
+                            <span class="text-xs text-purple-600 font-bold bg-white px-2.5 py-1 rounded-lg border border-purple-100" id="todo-progress-text">完了 0 / 0</span>
+                        </div>
+                    </div>
+
+                    <!-- プログレスバー -->
+                    <div class="w-full bg-purple-100 h-2.5 rounded-full overflow-hidden">
+                        <div class="bg-gradient-to-r from-pink-300 via-purple-300 to-sky-300 h-full transition-all duration-500" id="todo-progress-bar" style="width: 0%"></div>
+                    </div>
+
+                    <!-- 新規タスク＆予定 統合追加フォーム -->
+                    <form onsubmit="addTask(event)" class="space-y-3 bg-white/60 p-4 rounded-2xl border border-purple-100">
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <input type="text" id="new-task-input" required placeholder="例: カフェで勉強する、12:00 ランチミーティング..." class="flex-1 bg-white border border-purple-100 rounded-xl px-4 py-2 text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:border-purple-300 transition-colors shadow-inner">
+                            
+                            <div class="flex gap-2">
+                                <select id="new-task-tag" class="bg-white border border-purple-100 rounded-xl px-3 py-2 text-xs font-bold text-purple-700 focus:outline-none">
+                                    <option value="🌸重要">🌸 重要</option>
+                                    <option value="🍀習慣">🍀 習慣</option>
+                                    <option value="⭐快速">⭐ 快速</option>
+                                    <option value="🧸お気楽">🧸 お気楽</option>
+                                </select>
+                                <select id="new-task-repeat" class="bg-white border border-purple-100 rounded-xl px-3 py-2 text-xs font-bold text-purple-700 focus:outline-none">
+                                    <option value="none">🔁 1回のみ</option>
+                                    <option value="daily">🔄 毎日習慣</option>
+                                    <option value="weekly">📅 毎週習慣</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 時間割設定の展開スイッチ -->
+                        <div class="flex flex-wrap justify-between items-center gap-2 pt-1">
+                            <label class="flex items-center gap-1.5 cursor-pointer text-[11px] text-slate-500 font-bold">
+                                <input type="checkbox" id="time-toggle" onchange="toggleTimePanel()" class="rounded border-purple-200 text-purple-500 focus:ring-purple-400">
+                                <span>🕒 スケジュール時間(タイムライン)を設定する</span>
+                            </label>
+
+                            <button type="submit" class="bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-300 hover:opacity-90 text-white font-extrabold text-xs px-6 py-2.5 rounded-xl transition-all flex items-center gap-1.5 shadow-md shadow-purple-100">
+                                <i class="fa-solid fa-plus"></i> 追加
+                            </button>
+                        </div>
+
+                        <!-- 時間設定エリア（トグル時のみ開く） -->
+                        <div id="time-select-panel" class="hidden grid grid-cols-2 gap-2 pt-2 border-t border-purple-100/50">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 mb-1">開始時間</label>
+                                <input type="time" id="new-task-start" value="10:00" class="w-full bg-white border border-purple-100 rounded-lg p-1.5 text-xs">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 mb-1">終了時間</label>
+                                <input type="time" id="new-task-end" value="11:00" class="w-full bg-white border border-purple-100 rounded-lg p-1.5 text-xs">
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- タスクリストヘッダー＆一括消去ボタン -->
+                    <div class="flex justify-between items-center pt-2">
+                        <span class="text-xs text-slate-400 font-bold">タスク一覧</span>
+                        <button id="clear-completed-btn" onclick="clearCompletedTasks()" class="hidden text-[10px] font-bold bg-rose-50 text-rose-500 hover:bg-rose-100 border border-rose-200 px-2.5 py-1.5 rounded-xl transition-all">
+                            <i class="fa-solid fa-trash-can mr-1"></i>完了したタスクを消去
+                        </button>
+                    </div>
+
+                    <!-- タスクリスト -->
+                    <div class="space-y-2 mt-2" id="task-list">
+                        <!-- 動的にTODO項目を注入 -->
+                    </div>
+                </div>
+
+                <!-- インライン編集フォーム (必要な時だけポップアップ) -->
+                <div id="inline-editor" class="hidden glass-panel-purple rounded-3xl p-5 border-2 border-pink-200 shadow-xl space-y-3">
+                    <div class="flex justify-between items-center border-b border-purple-100 pb-2">
+                        <h4 class="text-xs font-black text-purple-800 flex items-center gap-1.5">
+                            <i class="fa-solid fa-pen-to-square"></i> タスクの編集
+                        </h4>
+                        <button onclick="closeEditor()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    
+                    <input type="hidden" id="edit-id">
+
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 mb-1">タスク名</label>
+                            <input type="text" id="edit-text" class="w-full bg-white border border-purple-100 rounded-xl p-2.5 text-xs text-slate-700">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 mb-1">バッジ</label>
+                                <select id="edit-tag" class="w-full bg-white border border-purple-100 rounded-xl p-2 text-xs font-bold text-purple-700">
+                                    <option value="🌸重要">🌸 重要</option>
+                                    <option value="🍀習慣">🍀 習慣</option>
+                                    <option value="⭐快速">⭐ 快速</option>
+                                    <option value="🧸お気楽">🧸 お気楽</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 mb-1">繰り返し</label>
+                                <select id="edit-repeat" class="w-full bg-white border border-purple-100 rounded-xl p-2 text-xs font-bold text-purple-700">
+                                    <option value="none">🔁 1回のみ</option>
+                                    <option value="daily">🔄 毎日習慣</option>
+                                    <option value="weekly">📅 毎週習慣</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 時間設定 -->
+                        <div class="grid grid-cols-2 gap-2 border-t border-purple-100/50 pt-2">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 mb-1">開始（空欄でタスク化）</label>
+                                <input type="time" id="edit-start" class="w-full bg-white border border-purple-100 rounded-lg p-1.5 text-xs">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 mb-1">終了</label>
+                                <input type="time" id="edit-end" class="w-full bg-white border border-purple-100 rounded-lg p-1.5 text-xs">
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end gap-2 pt-2">
+                            <button type="button" onclick="closeEditor()" class="bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold text-xs px-4 py-2 rounded-xl transition-all">キャンセル</button>
+                            <button type="button" onclick="saveEditedTask()" class="bg-gradient-to-r from-pink-300 to-purple-300 text-white font-extrabold text-xs px-5 py-2 rounded-xl transition-all shadow">保存</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 1日の終わりのふりかえり・締めくくり -->
+                <div class="glass-panel-purple rounded-3xl p-6 space-y-4 border border-pink-200">
+                    <h3 class="font-bold text-purple-800 flex items-center gap-2">
+                        <i class="fa-solid fa-pen-fancy text-purple-500"></i>
+                        今日の締めくくり・ジャーナル
+                    </h3>
+                    <p class="text-xs text-slate-400 font-semibold">
+                        今日1日の成果、学んだこと、または自分への労いの言葉を1行でも良いので書き残しましょう。
+                    </p>
+                    
+                    <textarea id="today-journal-input" rows="3" placeholder="ここに入力した日記やタスクの内容をもとに、AIコーチが今夜の「あなただけの称号」と「ふりかえりアドバイス」を自動生成します。" class="w-full bg-white/80 border border-purple-100 rounded-2xl p-3.5 text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:border-purple-300 transition-colors resize-none shadow-inner"></textarea>
+
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2">
+                        <div class="text-[11px] text-purple-600 font-semibold flex items-center gap-1.5">
+                            <i class="fa-solid fa-circle-info"></i>
+                            <span>保存すると、左側のカレンダーに王冠（👑）が一生残ります。</span>
+                        </div>
+                        <button onclick="triggerCeremony()" class="bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-300 hover:opacity-90 text-white font-extrabold text-xs px-6 py-3.5 rounded-2xl transition-all duration-300 transform active:scale-95 flex items-center justify-center gap-2 shadow-md shadow-purple-100">
+                            👑 今日の成果をカレンダーに保存する
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ローカルAI分析中ローダー -->
+                <div id="ai-loader" class="hidden glass-panel-purple rounded-3xl p-8 text-center space-y-4 border border-pink-200">
+                    <div class="flex justify-center">
+                        <div class="relative w-16 h-16">
+                            <div class="absolute inset-0 rounded-full border-4 border-purple-100"></div>
+                            <div class="absolute inset-0 rounded-full border-4 border-t-purple-400 animate-spin"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold text-purple-700">AIコーチ、今日のあなたの努力を分析中... ✨</h4>
+                        <p class="text-[11px] text-slate-400 mt-1 font-medium">タスクの達成状況とジャーナルを読み込んで、極上の称賛メッセージを綴っています。</p>
+                    </div>
+                </div>
+
+                <!-- AIコーチ本日の称賛フィードバック結果 -->
+                <div id="ai-feedback-result" class="hidden bg-gradient-to-tr from-pink-50 via-purple-50 to-sky-50 border border-purple-200 rounded-3xl p-6 shadow-lg relative overflow-hidden">
+                    <div class="absolute right-0 bottom-0 opacity-10 pointer-events-none">
+                        <i class="fa-solid fa-trophy text-8xl text-purple-300"></i>
+                    </div>
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="px-3 py-1 rounded-full bg-purple-100 text-purple-700 border border-purple-200/50 text-[10px] font-bold flex items-center gap-1.5 shadow-sm">
+                            ✨ 今日のAIコーチング完了！
+                        </span>
+                        <span class="text-[10px] text-slate-400 font-bold bg-white/75 border border-slate-200/40 px-2.5 py-1 rounded-lg" id="feedback-saved-timestamp">保存時間: 22:30</span>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div class="text-[10px] text-purple-500 font-bold uppercase tracking-wider">AIがあなたに授けた最高の称号</div>
+                        <h3 class="text-base font-extrabold text-purple-700 bg-white/90 border border-purple-200 px-3 py-2 rounded-xl inline-flex items-center gap-2" id="feedback-title">
+                            🏆 【不屈のチャレンジャー】
+                        </h3>
+                        <p class="text-xs text-slate-600 font-medium leading-relaxed pt-2 border-t border-purple-100" id="feedback-body">
+                            素晴らしい一日でしたね！予定していたタスクをすべてやり遂げ、さらに日記で自分を見つめ直す姿勢はまさに一流です。この前進は決して無駄にはなりません。
+                        </p>
+                    </div>
+
+                    <div class="mt-5 pt-4 border-t border-purple-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <div class="text-[10px] text-slate-400 font-semibold">
+                            ※このふりかえりデータはカレンダーの該当日に保存されました。明日になってもカレンダーからいつでも確認できます。
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- カスタム通知トースト -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-white border border-purple-200/80 text-slate-700 px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3">
+        <span class="text-purple-500" id="toast-icon">✨</span>
+        <span class="text-xs font-bold" id="toast-message">メッセージです</span>
+    </div>
+
+    <script>
+        // --- Web Audio API Chime Synth for premium feedback ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(type) {
+            try {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const now = audioCtx.currentTime;
+                
+                if (type === 'add') {
+                    // Sweet high organic note
+                    playTone(523.25, 0.1, now, 'sine', 0.08); // C5
+                    playTone(659.25, 0.15, now + 0.04, 'sine', 0.05); // E5
+                } else if (type === 'complete') {
+                    // Beautiful macaron crystal sparkle (Major 7th chord)
+                    playTone(349.23, 0.4, now, 'sine', 0.04); // F4
+                    playTone(440.00, 0.4, now + 0.03, 'sine', 0.04); // A4
+                    playTone(523.25, 0.5, now + 0.06, 'sine', 0.04); // C5
+                    playTone(659.25, 0.6, now + 0.09, 'sine', 0.03); // E5
+                    playTone(783.99, 0.7, now + 0.12, 'sine', 0.02); // G5
+                } else if (type === 'delete') {
+                    // Gentle bubbly drop
+                    playTone(392.00, 0.15, now, 'triangle', 0.08);
+                    playTone(261.63, 0.2, now + 0.05, 'triangle', 0.05);
+                } else if (type === 'crown') {
+                    // Royal grand fan-fare chime
+                    const notes = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];
+                    notes.forEach((f, i) => {
+                        playTone(f, 0.8, now + (i * 0.06), 'sine', 0.03);
+                    });
+                }
+            } catch (err) {
+                console.log("Audio contexts not supported/allowed yet");
+            }
+        }
+
+        function playTone(freq, duration, startTime, wave = 'sine', vol = 0.05) {
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            osc.type = wave;
+            osc.frequency.setValueAtTime(freq, startTime);
+            
+            gainNode.gain.setValueAtTime(0, startTime);
+            gainNode.gain.linearRampToValueAtTime(vol, startTime + 0.015);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+            
+            osc.start(startTime);
+            osc.stop(startTime + duration);
+        }
+
+        // --- Application State ---
+        const MOCK_TITLES = [
+            "🏆 【爆速のタスクバスター】",
+            "👑 【自己管理の最高経営責任者】",
+            "🌱 【マイペースな前進主義者】",
+            "🚀 【限界を突破せし開拓者】",
+            "🛡️ 【堅実なるルーティン・マスター】",
+            "💡 【クリエイティブ・エクスプローラー】",
+            "🎯 【目標必中のスナイパー】",
+            "🌟 【圧倒的なる自己成長の星】",
+            "🍵 【心身のバランス調律師】"
+        ];
+
+        const MOCK_ADVICES = [
+            "あなたの並外れた実行力には本当に目を見張るものがあります。特に今日完了したタスクの数々は、あなたが「やる」と決めたことを確実にやり抜く力の証明です！このリズムを大切に、心地よい夜を過ごしてくださいね。",
+            "タスクを一つずつ丁寧にやっつけていくその姿勢、本当に素晴らしいです！日記からも、自分の状態を客観的に見つめ直す素晴らしい気づきが感じられます。明日のあなたも、今日の積み重ねの上にきっと最高のスタートを切れるはずです。",
+            "完璧を追い求めすぎず、自分のペースを守り抜いたこと自体が今日の最大の勝利です。小さな一歩こそが、未来の巨大なジャンプを支える土台になります。今日は自分自身をたっぷりと労ってあげてください。",
+            "素晴らしい集中力ですね！今日やり遂げたタスクは、確実にあなたの未来の可能性を広げています。AIコーチとして、あなたのこの着実な歩みを誇りに思います。今夜はお風呂にゆっくり入ってリラックスしましょう！",
+            "ルーティンを淡々と、しかし確実にこなすこと。これこそが最も難しく、かつ最も尊い才能です。あなたは今日、その才能を遺憾なく発揮しました。カレンダーに刻まれたこの王冠は、あなたの信頼の証です。"
+        ];
+
+        let state = {
+            currentDate: new Date(), // Selected Calendar Date
+            todayDate: new Date(),   // System Today
+            selectedMood: '😊',
+            todos: [],               // [{ id, text, completed, tag, repeat, start, end }]
+            archive: {},             // { "YYYY-MM-DD": { mood, todos, journal, aiTitle, aiFeedback, savedAt } }
+            streak: 0,
+            lastSavedDateStr: ""     // YYYY-MM-DD
+        };
+
+        // Badge Styling Classes
+        const tagStyles = {
+            "🌸重要": "bg-rose-100 border-rose-200 text-rose-700",
+            "🍀習慣": "bg-emerald-100 border-emerald-200 text-emerald-700",
+            "⭐快速": "bg-sky-100 border-sky-200 text-sky-700",
+            "🧸お気楽": "bg-orange-100 border-orange-200 text-orange-700"
+        };
+
+        // --- STREAMING_CHUNK: App Loading & Date Initializers... ---
+        window.onload = function() {
+            loadFromLocalStorage();
+            checkAndResetForNewDay();
+            initializeTodayWorkspace();
+            renderCalendar();
+            renderStats();
+            setMood('😊');
+            
+            // Starter tasks if empty
+            if (state.todos.length === 0) {
+                state.todos = [
+                    { id: 1, text: "今日のタスクを完了させてみる", completed: false, tag: "🌸重要", repeat: "none" },
+                    { id: 2, text: "ジャーナル（ひとこと日記）を書いてみる", completed: false, tag: "🍀習慣", repeat: "daily" },
+                    { id: 3, text: "カレンダーに本日の成果を「保存」する", completed: false, tag: "⭐快速", repeat: "none" }
+                ];
+                saveToLocalStorage();
+                renderTodos();
+            }
+        };
+
+        // --- LocalStorage persistence ---
+        function loadFromLocalStorage() {
+            const savedArchive = localStorage.getItem('ai_macaron_archive');
+            if (savedArchive) {
+                state.archive = JSON.parse(savedArchive);
+            }
+            const savedTodos = localStorage.getItem('ai_macaron_todos');
+            if (savedTodos) {
+                state.todos = JSON.parse(savedTodos);
+            }
+            const streakVal = localStorage.getItem('ai_macaron_streak');
+            if (streakVal) {
+                state.streak = parseInt(streakVal, 10);
+            }
+            const lastSavedDate = localStorage.getItem('ai_macaron_last_saved_date');
+            if (lastSavedDate) {
+                state.lastSavedDateStr = lastSavedDate;
+            }
+            updateStreakDisplay();
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('ai_macaron_archive', JSON.stringify(state.archive));
+            localStorage.setItem('ai_macaron_todos', JSON.stringify(state.todos));
+            localStorage.setItem('ai_macaron_streak', state.streak.toString());
+            localStorage.setItem('ai_macaron_last_saved_date', state.lastSavedDateStr);
+        }
+
+        // --- STREAMING_CHUNK: Handling New Day Auto Cleanups... ---
+        function checkAndResetForNewDay() {
+            const lastActive = localStorage.getItem('ai_macaron_last_active_day');
+            const todayKey = formatDateKey(state.todayDate);
+
+            if (lastActive && lastActive !== todayKey) {
+                // Another day! Perform cleanups
+                let remainingTodos = [];
+                let resetCount = 0;
+
+                state.todos.forEach(todo => {
+                    // Check if habit (daily/weekly) or non-completed task
+                    if (todo.repeat === 'daily' || todo.repeat === 'weekly') {
+                        // Keep and reset to incomplete
+                        todo.completed = false;
+                        remainingTodos.push(todo);
+                        resetCount++;
+                    } else if (!todo.completed) {
+                        // Keep non-completed 1-time tasks
+                        remainingTodos.push(todo);
+                    }
+                    // Completed 1-time tasks are automatically purged (archived in historical logs)
+                });
+
+                state.todos = remainingTodos;
+                saveToLocalStorage();
+
+                if (resetCount > 0) {
+                    setTimeout(() => {
+                        showToast(`🌅 新しい一日！${resetCount}個の習慣タスクを元気にリセットしました`, "crown");
+                    }, 1000);
+                }
+            }
+            localStorage.setItem('ai_macaron_last_active_day', todayKey);
+        }
+
+        function updateStreakDisplay() {
+            document.getElementById('streak-count').textContent = state.streak;
+        }
+
+        function toggleTimePanel() {
+            const isChecked = document.getElementById('time-toggle').checked;
+            const panel = document.getElementById('time-select-panel');
+            if (isChecked) {
+                panel.classList.remove('hidden');
+            } else {
+                panel.classList.add('hidden');
+            }
+        }
+
+        // --- STREAMING_CHUNK: Rendering the Calendar Days... ---
+        function renderCalendar() {
+            const calendarDays = document.getElementById('calendar-days');
+            const monthYearHeader = document.getElementById('calendar-month-year');
+            if (!calendarDays || !monthYearHeader) return;
+            
+            calendarDays.innerHTML = '';
+
+            const year = state.currentDate.getFullYear();
+            const month = state.currentDate.getMonth();
+
+            monthYearHeader.textContent = `${year}年 ${month + 1}月`;
+
+            // Offset Monday first or standard Sunday first index
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const lastDay = new Date(year, month + 1, 0).getDate();
+
+            for (let i = 0; i < firstDayIndex; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'py-2';
+                calendarDays.appendChild(emptyCell);
+            }
+
+            for (let day = 1; day <= lastDay; day++) {
+                const dayDate = new Date(year, month, day);
+                const dateKey = formatDateKey(dayDate);
+                const hasArchive = !!state.archive[dateKey];
+                const isToday = formatDateKey(state.todayDate) === dateKey;
+                const isSelected = formatDateKey(state.currentDate) === dateKey;
+
+                const dayBtn = document.createElement('button');
+                dayBtn.type = 'button';
+                dayBtn.onclick = () => selectDate(dayDate);
+
+                dayBtn.className = 'py-2 rounded-2xl flex flex-col items-center justify-between min-h-[50px] transition-all relative border ';
+
+                if (hasArchive) {
+                    // Golden Honey gradient for saved crowns
+                    dayBtn.className += ' bg-gradient-to-tr from-[#fef08a] to-[#fde047] border-[#fde047] text-[#854d0e] hover:brightness-105 shadow-sm ';
+                } else if (isToday) {
+                    // Soft pink for active system today
+                    dayBtn.className += ' bg-[#fff5f6] border-[#ffccd5] text-[#db2777] hover:bg-[#ffe4e6] ';
+                } else {
+                    // Normal pastel white/blue
+                    dayBtn.className += ' bg-white border-sky-100 text-sky-800 hover:bg-sky-50 ';
+                }
+
+                if (isSelected) {
+                    dayBtn.className += ' ring-2 ring-purple-400 ring-offset-2 ring-offset-white ';
+                }
+
+                const dayNumSpan = document.createElement('span');
+                dayNumSpan.className = `text-xs font-bold ${isToday ? 'underline decoration-2' : ''}`;
+                dayNumSpan.textContent = day;
+                dayBtn.appendChild(dayNumSpan);
+
+                const indicatorSpan = document.createElement('span');
+                indicatorSpan.className = 'text-[11px] leading-none mt-0.5';
+                if (hasArchive) {
+                    indicatorSpan.textContent = '👑';
+                } else {
+                    indicatorSpan.textContent = '·';
+                    indicatorSpan.className += ' text-transparent';
+                }
+                dayBtn.appendChild(indicatorSpan);
+
+                calendarDays.appendChild(dayBtn);
+            }
+        }
+
+        // --- Stats Render ---
+        function renderStats() {
+            const keys = Object.keys(state.archive);
+            document.getElementById('stats-crowns').innerHTML = `${keys.length} <span class="text-xs text-slate-400">個</span>`;
+            
+            let totalTasks = 0;
+            keys.forEach(key => {
+                const dayData = state.archive[key];
+                if (dayData && dayData.todos) {
+                    totalTasks += dayData.todos.filter(t => t.completed).length;
+                }
+            });
+            document.getElementById('stats-tasks').innerHTML = `${totalTasks} <span class="text-xs text-slate-400 font-bold">個</span>`;
+        }
+
+        // --- STREAMING_CHUNK: Date Selector Action... ---
+        function selectDate(date) {
+            state.currentDate = date;
+            renderCalendar();
+
+            const dateKey = formatDateKey(date);
+            const todayKey = formatDateKey(state.todayDate);
+
+            // Set mood back if recorded
+            if (state.archive[dateKey]) {
+                showArchiveView(dateKey);
+            } else {
+                hideArchiveView();
+                if (dateKey === todayKey) {
+                    document.getElementById('today-workspace').classList.remove('hidden');
+                    document.getElementById('current-work-date').innerHTML = `
+                        ${formatDateString(date)}
+                        <span class="text-xs px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-500 border border-purple-200 font-bold">今日</span>
+                    `;
+                } else {
+                    document.getElementById('today-workspace').classList.remove('hidden');
+                    document.getElementById('current-work-date').innerHTML = `
+                        ${formatDateString(date)}
+                        <span class="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-400 font-bold">ログなし</span>
+                    `;
+                }
+            }
+        }
+
+        function showArchiveView(dateKey) {
+            const archiveData = state.archive[dateKey];
+            const archiveView = document.getElementById('archive-view');
+            const todayWorkspace = document.getElementById('today-workspace');
+
+            todayWorkspace.classList.add('hidden');
+            archiveView.classList.remove('hidden');
+
+            document.getElementById('archive-date-title').textContent = formatDateString(new Date(dateKey));
+            document.getElementById('archive-emoji').textContent = archiveData.mood || '😊';
+            document.getElementById('archive-saved-time').textContent = archiveData.savedAt || '不明';
+            document.getElementById('archive-title-badge').textContent = archiveData.aiTitle || '🏆 【着実なる努力家】';
+            document.getElementById('archive-coach-feedback').textContent = archiveData.aiFeedback || '素晴らしい積み重ねです！';
+            document.getElementById('archive-diary').textContent = archiveData.journal || '（日記の書き残しはありません）';
+
+            const archiveTasksContainer = document.getElementById('archive-tasks');
+            archiveTasksContainer.innerHTML = '';
+            if (archiveData.todos && archiveData.todos.length > 0) {
+                archiveData.todos.forEach(task => {
+                    const li = document.createElement('li');
+                    li.className = 'flex items-center gap-2 text-xs py-1.5 border-b border-purple-50 last:border-0 text-slate-600 font-medium';
+                    li.innerHTML = task.completed 
+                        ? `<i class="fa-solid fa-circle-check text-emerald-400"></i> <span class="line-through text-slate-400">${task.text}</span>`
+                        : `<i class="fa-regular fa-circle text-slate-300"></i> <span class="text-slate-500">${task.text}</span>`;
+                    archiveTasksContainer.appendChild(li);
+                });
+            } else {
+                archiveTasksContainer.innerHTML = `<li class="text-xs text-slate-400 italic">登録されたタスクはありませんでした</li>`;
+            }
+        }
+
+        function hideArchiveView() {
+            document.getElementById('archive-view').classList.add('hidden');
+            document.getElementById('today-workspace').classList.remove('hidden');
+        }
+
+        function backToToday() {
+            selectDate(state.todayDate);
+        }
+
+        function initializeTodayWorkspace() {
+            document.getElementById('current-work-date').innerHTML = `
+                ${formatDateString(state.todayDate)}
+                <span class="text-xs px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-500 border border-purple-200 font-bold">今日</span>
+            `;
+            renderTodos();
+        }
+
+        function setMood(emoji) {
+            state.selectedMood = emoji;
+            document.querySelectorAll('.mood-btn').forEach(btn => {
+                if (btn.getAttribute('data-mood') === emoji) {
+                    btn.className = 'mood-btn w-8 h-8 rounded-xl flex items-center justify-center bg-purple-100 text-purple-600 text-sm border border-purple-200/60 shadow-sm font-bold scale-110 transition-all';
+                } else {
+                    btn.className = 'mood-btn w-8 h-8 rounded-xl flex items-center justify-center hover:bg-slate-100 transition-all text-sm border border-transparent text-slate-400';
+                }
+            });
+        }
+
+        // --- STREAMING_CHUNK: Managing Todo / Schedule Addition... ---
+        function addTask(event) {
+            event.preventDefault();
+            const input = document.getElementById('new-task-input');
+            const tagSelect = document.getElementById('new-task-tag');
+            const repeatSelect = document.getElementById('new-task-repeat');
+            const timeToggle = document.getElementById('time-toggle');
+
+            const text = input.value.trim();
+            if (!text) return;
+
+            let start = null;
+            let end = null;
+
+            // Check if user specified a manual time range via panel
+            if (timeToggle.checked) {
+                start = document.getElementById('new-task-start').value;
+                end = document.getElementById('new-task-end').value;
+            } else {
+                // Smart Time Parsing (e.g. "12:00-13:00 ミーティング" or "15:00 勉強")
+                const timeRegex = /(\d{1,2}):(\d{2})(?:\s*-\s*(\d{1,2}):(\d{2}))?/;
+                const match = text.match(timeRegex);
+                if (match) {
+                    const startHour = match[1].padStart(2, '0');
+                    const startMin = match[2];
+                    start = `${startHour}:${startMin}`;
+                    
+                    if (match[3] && match[4]) {
+                        const endHour = match[3].padStart(2, '0');
+                        const endMin = match[4];
+                        end = `${endHour}:${endMin}`;
+                    } else {
+                        // Default to 1 hour after start
+                        const nextHour = (parseInt(startHour, 10) + 1).toString().padStart(2, '0');
+                        end = `${nextHour}:${startMin}`;
+                    }
+                }
+            }
+
+            const newTask = {
+                id: Date.now(),
+                text: text,
+                completed: false,
+                tag: tagSelect.value,
+                repeat: repeatSelect.value,
+                start: start,
+                end: end
+            };
+
+            state.todos.push(newTask);
+            
+            // Clean up additions form
+            input.value = '';
+            timeToggle.checked = false;
+            document.getElementById('time-select-panel').classList.add('hidden');
+            
+            saveToLocalStorage();
+            renderTodos();
+            playSound('add');
+            showToast("📝 タスクを追加しました", "plus");
+        }
+
+        // --- STREAMING_CHUNK: Rendering Todo & Schedule Items... ---
+        function renderTodos() {
+            const taskList = document.getElementById('task-list');
+            const clearBtn = document.getElementById('clear-completed-btn');
+            const syncChecked = document.getElementById('toggle-timeline-sync').checked;
+            
+            if (!taskList) return;
+            taskList.innerHTML = '';
+
+            // Filter items based on user synchronization options
+            let displayList = state.todos;
+            if (!syncChecked) {
+                displayList = state.todos.filter(todo => !todo.start);
+            }
+
+            if (displayList.length === 0) {
+                taskList.innerHTML = `
+                    <div class="text-center py-6 text-xs text-slate-400 italic font-semibold">
+                        登録されたTODOや予定はまだありません。
+                    </div>
+                `;
+                updateProgress(0, 0);
+                clearBtn.classList.add('hidden');
+                return;
+            }
+
+            // Check if any single completed task exists to toggle the manual sweep button
+            const anyCompletedOneTime = state.todos.some(t => t.completed && t.repeat === 'none');
+            if (anyCompletedOneTime) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+
+            // Separate schedules (with start time) vs standard tasks, then sort schedule by timing
+            const schedules = displayList.filter(t => t.start).sort((a, b) => a.start.localeCompare(b.start));
+            const normalTasks = displayList.filter(t => !t.start);
+
+            // Re-combine: Schedule items on top (ordered by hours), then normal tasks
+            const sortedItems = [...schedules, ...normalTasks];
+
+            sortedItems.forEach(task => {
+                const item = document.createElement('div');
+                const badgeColorClass = tagStyles[task.tag] || "bg-purple-100 text-purple-700";
+                
+                // Color panel accent adjustments
+                let panelStyle = "bg-white border-purple-100 hover:border-purple-200";
+                if (task.completed) {
+                    panelStyle = "bg-emerald-50/40 border-emerald-200/50 text-slate-400";
+                } else if (task.start) {
+                    // Highlight timeline items with delicate light blue gradient
+                    panelStyle = "bg-gradient-to-r from-sky-50 to-white border-sky-100 hover:border-sky-200";
+                }
+
+                item.className = `flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-2xl border transition-all shadow-sm ${panelStyle} gap-2`;
+
+                // Render dynamic time layout label
+                const timeLabel = task.start 
+                    ? `<span class="px-2 py-0.5 bg-sky-100 text-sky-700 text-[10px] font-black rounded-lg mr-1"><i class="fa-regular fa-clock"></i> ${task.start}${task.end ? ' - ' + task.end : ''}</span>`
+                    : '';
+
+                const repeatLabel = task.repeat !== 'none'
+                    ? `<span class="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-black rounded-lg mr-1"><i class="fa-solid fa-repeat"></i> ${task.repeat === 'daily' ? '毎日' : '毎週'}</span>`
+                    : '';
+
+                item.innerHTML = `
+                    <div class="flex items-center gap-3 flex-1 cursor-pointer" onclick="toggleTask(${task.id})">
+                        <button type="button" class="w-5.5 h-5.5 rounded-lg flex items-center justify-center transition-all flex-shrink-0 ${
+                            task.completed 
+                                ? 'bg-emerald-400 text-white shadow-sm' 
+                                : 'border-2 border-purple-200 hover:border-purple-300 bg-white'
+                        }">
+                            ${task.completed ? '<i class="fa-solid fa-check text-[11px] font-bold"></i>' : ''}
+                        </button>
+                        <div class="flex flex-col">
+                            <span class="text-xs font-semibold leading-normal ${task.completed ? 'line-through text-slate-400' : 'text-slate-700'}">
+                                ${escapeHtml(task.text)}
+                            </span>
+                            <div class="flex flex-wrap gap-1 mt-1">
+                                ${timeLabel}
+                                ${repeatLabel}
+                                <span class="px-2 py-0.5 rounded-lg border text-[9px] font-black ${badgeColorClass}">${task.tag}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-end gap-1">
+                        <!-- Convert task/schedule hours quick button -->
+                        <button onclick="event.stopPropagation(); openEditor(${task.id})" class="text-slate-400 hover:text-purple-500 p-1.5 hover:bg-purple-100/50 rounded-xl transition-colors" title="詳細編集">
+                            <i class="fa-solid fa-pen text-xs"></i>
+                        </button>
+                        <button onclick="event.stopPropagation(); deleteTask(${task.id})" class="text-slate-400 hover:text-rose-400 p-1.5 hover:bg-rose-50 rounded-xl transition-colors" title="削除">
+                            <i class="fa-regular fa-trash-can text-xs"></i>
+                        </button>
+                    </div>
+                `;
+                taskList.appendChild(item);
+            });
+
+            const completedCount = state.todos.filter(t => t.completed).length;
+            updateProgress(completedCount, state.todos.length);
+        }
+
+        // --- STREAMING_CHUNK: Managing Progress Updates & Sound Triggers... ---
+        function toggleTask(id) {
+            state.todos = state.todos.map(task => {
+                if (task.id === id) {
+                    const nextState = !task.completed;
+                    if (nextState) {
+                        playSound('complete');
+                        showToast("🎉 ナイス！タスク完了", "check");
+                        triggerConfettiParticle();
+                    } else {
+                        playSound('delete');
+                    }
+                    return { ...task, completed: nextState };
+                }
+                return task;
+            });
+            saveToLocalStorage();
+            renderTodos();
+        }
+
+        function deleteTask(id) {
+            state.todos = state.todos.filter(task => task.id !== id);
+            saveToLocalStorage();
+            renderTodos();
+            playSound('delete');
+            showToast("🗑️ タスクを削除しました", "trash");
+        }
+
+        function clearCompletedTasks() {
+            // Sweep all 1-time completed items out of list (as they are safely saved if today's ceremony is run)
+            state.todos = state.todos.filter(t => !(t.completed && t.repeat === 'none'));
+            saveToLocalStorage();
+            renderTodos();
+            playSound('delete');
+            showToast("🧹 完了したタスクを一括消去しました", "trash");
+        }
+
+        function updateProgress(completed, total) {
+            const progressPercent = total === 0 ? 0 : Math.round((completed / total) * 100);
+            const bar = document.getElementById('todo-progress-bar');
+            if (bar) bar.style.width = `${progressPercent}%`;
+            document.getElementById('todo-progress-text').textContent = `完了 ${completed} / ${total}`;
+        }
+
+        // --- STREAMING_CHUNK: Editing Tasks Inline... ---
+        function openEditor(id) {
+            const task = state.todos.find(t => t.id === id);
+            if (!task) return;
+
+            document.getElementById('edit-id').value = task.id;
+            document.getElementById('edit-text').value = task.text;
+            document.getElementById('edit-tag').value = task.tag;
+            document.getElementById('edit-repeat').value = task.repeat;
+            document.getElementById('edit-start').value = task.start || '';
+            document.getElementById('edit-end').value = task.end || '';
+
+            const editor = document.getElementById('inline-editor');
+            editor.classList.remove('hidden');
+            editor.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function closeEditor() {
+            document.getElementById('inline-editor').classList.add('hidden');
+        }
+
+        function saveEditedTask() {
+            const id = parseInt(document.getElementById('edit-id').value, 10);
+            const text = document.getElementById('edit-text').value.trim();
+            const tag = document.getElementById('edit-tag').value;
+            const repeat = document.getElementById('edit-repeat').value;
+            const startVal = document.getElementById('edit-start').value;
+            const endVal = document.getElementById('edit-end').value;
+
+            if (!text) return;
+
+            state.todos = state.todos.map(task => {
+                if (task.id === id) {
+                    return {
+                        ...task,
+                        text: text,
+                        tag: tag,
+                        repeat: repeat,
+                        start: startVal ? startVal : null,
+                        end: endVal ? endVal : null
+                    };
+                }
+                return task;
+            });
+
+            saveToLocalStorage();
+            renderTodos();
+            closeEditor();
+            playSound('add');
+            showToast("📝 タスクを更新しました", "plus");
+        }
+
+        // --- STREAMING_CHUNK: Handling Historical Ceremonies... ---
+        function triggerCeremony() {
+            const journalText = document.getElementById('today-journal-input').value.trim();
+            const completedTasks = state.todos.filter(t => t.completed);
+
+            if (completedTasks.length === 0 && !journalText) {
+                showToast("⚠️ 最低限1つのタスクを完了させるか、日記を記入してください！", "exclamation-circle");
+                return;
+            }
+
+            const loader = document.getElementById('ai-loader');
+            const feedbackResult = document.getElementById('ai-feedback-result');
+
+            loader.classList.remove('hidden');
+            feedbackResult.classList.add('hidden');
+            loader.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            setTimeout(() => {
+                const response = generateMockAiFeedback(completedTasks, journalText);
+                const todayKey = formatDateKey(state.todayDate);
+                const nowStr = new Date().toLocaleString('ja-JP', { hour12: false });
+                
+                state.archive[todayKey] = {
+                    mood: state.selectedMood,
+                    todos: [...state.todos],
+                    journal: journalText || "（日記の記入なし。アクションだけで素晴らしい前進です！）",
+                    aiTitle: response.title,
+                    aiFeedback: response.feedback,
+                    savedAt: nowStr
+                };
+
+                // Advance Streak logic (only once per day)
+                if (state.lastSavedDateStr !== todayKey) {
+                    state.streak += 1;
+                    state.lastSavedDateStr = todayKey;
+                }
+
+                saveToLocalStorage();
+                renderCalendar();
+                renderStats();
+                updateStreakDisplay();
+
+                loader.classList.add('hidden');
+                
+                document.getElementById('feedback-saved-timestamp').textContent = `保存完了: ${nowStr}`;
+                document.getElementById('feedback-title').textContent = response.title;
+                document.getElementById('feedback-body').textContent = response.feedback;
+                feedbackResult.classList.remove('hidden');
+
+                playSound('crown');
+                showToast("👑 今日の成果をカレンダーに永続保存しました！", "crown");
+                triggerConfettiCelebrate();
+                feedbackResult.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            }, 1200);
+        }
+
+        function showSavedAiFeedback(savedData) {
+            const feedbackResult = document.getElementById('ai-feedback-result');
+            document.getElementById('feedback-saved-timestamp').textContent = `保存完了: ${savedData.savedAt || '不明'}`;
+            document.getElementById('feedback-title').textContent = savedData.aiTitle;
+            document.getElementById('feedback-body').textContent = savedData.aiFeedback;
+            feedbackResult.classList.remove('hidden');
+        }
+
+        // --- Local AI praise simulation generator ---
+        function generateMockAiFeedback(completedTasks, journalText) {
+            let title = "";
+            let feedback = "";
+
+            const hasTechWords = /プログラミング|コード|設計|開発|実装|勉強|学習/i.test(journalText);
+            const hasRestWords = /寝る|疲れた|ゆっくり|休む|温泉|ジム|運動/i.test(journalText);
+
+            if (completedTasks.length >= 4) {
+                title = MOCK_TITLES[3]; // 【限界突破の開拓者】
+            } else if (hasTechWords) {
+                title = MOCK_TITLES[5]; // 【クリエイティブ・エクスプローラー】
+            } else if (hasRestWords) {
+                title = MOCK_TITLES[8]; // 【心身のバランス調律師】
+            } else {
+                title = MOCK_TITLES[Math.floor(Math.random() * MOCK_TITLES.length)];
+            }
+
+            let baseAdvice = MOCK_ADVICES[Math.floor(Math.random() * MOCK_ADVICES.length)];
+            
+            let personalization = "";
+            if (completedTasks.length > 0) {
+                const firstTask = completedTasks[0].text;
+                personalization = `特に「${firstTask}」をやり遂げたことは、今日一日の素晴らしい金字塔です！`;
+            }
+
+            feedback = `${personalization} ${baseAdvice}`;
+
+            return { title, feedback };
+        }
+
+        // --- STREAMING_CHUNK: Helpers and Chime Animators... ---
+        function formatDateKey(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function formatDateString(date) {
+            const days = ['日', '月', '火', '水', '木', '金', '土'];
+            const y = date.getFullYear();
+            const m = date.getMonth() + 1;
+            const d = date.getDate();
+            const dayName = days[date.getDay()];
+            return `${y}年 ${m}月 ${d}日 (${dayName})`;
+        }
+
+        function escapeHtml(str) {
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Custom Pastel Toasts
+        let toastTimeout;
+        function showToast(message, icon = "info") {
+            const toast = document.getElementById('toast');
+            const toastIcon = document.getElementById('toast-icon');
+            const toastMsg = document.getElementById('toast-message');
+
+            if (icon === "plus") toastIcon.innerHTML = `<i class="fa-solid fa-plus text-purple-400"></i>`;
+            else if (icon === "check") toastIcon.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i>`;
+            else if (icon === "trash") toastIcon.innerHTML = `<i class="fa-solid fa-trash-can text-rose-400"></i>`;
+            else if (icon === "crown") toastIcon.innerHTML = `<i class="fa-solid fa-crown text-amber-400"></i>`;
+            else toastIcon.innerHTML = `<i class="fa-solid fa-circle-info text-sky-400"></i>`;
+
+            toastMsg.textContent = message;
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        // Confetti triggers
+        function triggerConfettiParticle() {
+            confetti({
+                particleCount: 30,
+                spread: 40,
+                origin: { y: 0.8 },
+                colors: ['#fecdd3', '#bae6fd', '#d9f99d', '#e9d5ff', '#fed7aa']
+            });
+        }
+
+        function triggerConfettiCelebrate() {
+            var duration = 2 * 1000;
+            var end = Date.now() + duration;
+
+            (function frame() {
+                confetti({
+                    particleCount: 4,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0 },
+                    colors: ['#fecdd3', '#bae6fd', '#d9f99d', '#e9d5ff', '#fed7aa']
+                });
+                confetti({
+                    particleCount: 4,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1 },
+                    colors: ['#fecdd3', '#bae6fd', '#d9f99d', '#e9d5ff', '#fed7aa']
+                });
+
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            }());
+        }
+    </script>
+</body>
+</html>
