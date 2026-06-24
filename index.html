@@ -723,26 +723,44 @@
             const dateKey = formatDateKey(date);
             const todayKey = formatDateKey(state.todayDate);
 
-            // Set mood back if recorded
-            if (state.archive[dateKey]) {
-                showArchiveView(dateKey);
-            } else {
-                hideArchiveView();
-                if (dateKey === todayKey) {
-                    document.getElementById('today-workspace').classList.remove('hidden');
-                    document.getElementById('current-work-date').innerHTML = `
-                        ${formatDateString(date)}
-                        <span class="text-xs px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-500 border border-purple-200 font-bold">今日</span>
-                    `;
+            // 1. 今日（System Today）を選択した場合
+            if (dateKey === todayKey) {
+                hideArchiveView(); // 「過去アーカイブ呼び出し中」表示を必ず閉じる
+                document.getElementById('today-workspace').classList.remove('hidden');
+                document.getElementById('current-work-date').innerHTML = `
+                    ${formatDateString(date)}
+                    <span class="text-xs px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-500 border border-purple-200 font-bold">今日</span>
+                `;
+                
+                // すでに今日の分のログが保存されている場合は、日記や気分、AIフィードバック結果を連動表示する
+                if (state.archive[dateKey]) {
+                    showSavedAiFeedback(state.archive[dateKey]);
+                    document.getElementById('today-journal-input').value = state.archive[dateKey].journal || '';
+                    if (state.archive[dateKey].mood) {
+                        setMood(state.archive[dateKey].mood);
+                    }
                 } else {
+                    // まだ保存していない場合はAI結果を非表示にする
+                    document.getElementById('ai-feedback-result').classList.add('hidden');
+                }
+                renderTodos();
+            } 
+            // 2. 今日以外の日付を選択した場合
+            else {
+                if (state.archive[dateKey]) {
+                    // アーカイブデータがある場合は、読み取り専用のタイムトラベル画面を出す
+                    showArchiveView(dateKey);
+                } else {
+                    // ログがない過去・未来の日の場合は、通常のワークスペースを「ログなし」として表示
+                    hideArchiveView();
                     document.getElementById('today-workspace').classList.remove('hidden');
                     document.getElementById('current-work-date').innerHTML = `
                         ${formatDateString(date)}
                         <span class="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-400 font-bold">ログなし</span>
                     `;
+                    document.getElementById('ai-feedback-result').classList.add('hidden');
+                    renderTodos();
                 }
-                // 日付が変更されたため、タスク一覧を再描画する
-                renderTodos();
             }
         }
 
@@ -754,7 +772,7 @@
             todayWorkspace.classList.add('hidden');
             archiveView.classList.remove('hidden');
 
-            document.getElementById('archive-date-title').textContent = formatDateString(new Date(dateKey));
+            document.getElementById('archive-date-title').textContent = formatDateString(new Date(dateKey.replace(/-/g, '/')));
             document.getElementById('archive-emoji').textContent = archiveData.mood || '😊';
             document.getElementById('archive-saved-time').textContent = archiveData.savedAt || '不明';
             document.getElementById('archive-title-badge').textContent = archiveData.aiTitle || '🏆 【着実なる努力家】';
@@ -779,10 +797,10 @@
 
         function hideArchiveView() {
             document.getElementById('archive-view').classList.add('hidden');
-            document.getElementById('today-workspace').classList.remove('hidden');
         }
 
         function backToToday() {
+            state.todayDate = new Date(); // 最新の今日を取得
             selectDate(state.todayDate);
         }
 
