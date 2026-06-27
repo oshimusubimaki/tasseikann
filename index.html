@@ -491,25 +491,89 @@
             osc.stop(startTime + duration);
         }
 
-        // --- Application State ---
-        const MOCK_TITLES = [
-            "🏆 【爆速のタスクバスター】",
-            "👑 【自己管理の最高経営責任者】",
-            "🌱 【マイペースな前進主義者】",
-            "🚀 【限界を突破せし開拓者】",
-            "🛡️ 【堅実なるルーティン・マスター】",
-            "💡 【クリエイティブ・エクスプローラー】",
-            "🎯 【目標必中のスナイパー】",
-            "🌟 【圧倒的なる自己成長の星】",
-            "🍵 【心身のバランス調律師】"
+        // --- Application State & ローカルAI思考データベース ---
+        
+        // 1. 形容詞プレフィックス（20種類）
+        const TITLE_PREFIXES = [
+            "🏆 【爆速の", "👑 【絶対的な", "🌱 【マイペースな", "🚀 【次元を超える", "🛡️ 【鉄壁の", 
+            "💡 【未来を照らす", "🎯 【百発百中の", "🌟 【銀河系最強の", "🍵 【至高の", "🌸 【優美なる",
+            "🎨 【圧倒的クリエイティブな", "🦄 【超稀有な", "⚡ 【光速の", "🍬 【スイートな", "🔮 【神秘なる",
+            "🌈 【自由気ままな", "🐾 【お散歩気分の", "🧸 【癒やし度100%の", "💎 【輝きに満ちた", "🌊 【涼やかな"
         ];
 
-        const MOCK_ADVICES = [
-            "あなたの並外れた実行力には本当に目を見張るものがあります。特に今日完了したタスクの数々は、あなたが「やる」と決めたことを確実にやり抜く力の証明です！このリズムを大切に、心地よい夜を過ごしてくださいね。",
-            "タスクを一つずつ丁寧にやっつけていくその姿勢、本当に素晴らしいです！日記からも、自分の状態を客観的に見つめ直す素晴らしい気づきが感じられます。明日のあなたも、今日の積み重ねの上にきっと最高のスタートを切れるはずです。",
-            "完璧を追い求めすぎず、自分のペースを守り抜いたこと自体が今日の最大の勝利です。小さな一歩こそが、未来の巨大なジャンプを支える土台になります。今日は自分自身をたっぷりと労ってあげてください。",
-            "素晴らしい集中力ですね！今日やり遂げたタスクは、確実にあなたの未来の可能性を広げています。AIコーチとして、あなたのこの着実な歩みを誇りに思います。今夜はお風呂にゆっくり入ってリラックスしましょう！",
-            "ルーティンを淡々と、しかし確実にこなすこと。これこそが最も難しく、かつ最も尊い才能です。あなたは今日、その才能を遺憾なく発揮しました。カレンダーに刻まれたこの王冠は、あなたの信頼の証です。"
+        // 2. 名詞サフィックス（20種類）
+        const TITLE_SUFFIXES = [
+            "タスクバスター】", "自己管理マスター】", "前進主義者】", "開拓者】", "ルーティン・ヒーロー】",
+            "エクスプローラー】", "スナイパー】", "自己成長の星】", "ライフハッカー】", "バランサー】",
+            "ドリーマー】", "チャレンジャー】", "ライフデザイナー】", "クリエイター】", "習慣の支配者】",
+            "努力の天才】", "セルフケア達人】", "マイウェイランナー】", "癒やしスト】", "冒険家】"
+        ];
+
+        // 3. 日記のキーワードに連動するプレミアム称号
+        const KEYWORD_TITLES = {
+            "勉強": "📚 【知の探求を極めし賢者】",
+            "学習": "📚 【知の探求を極めし賢者】",
+            "プログラミング": "💻 【デジタル世界の超魔術師】",
+            "コード": "💻 【デジタル世界の超魔術師】",
+            "開発": "💻 【デジタル世界の超魔術師】",
+            "実装": "💻 【デジタル世界の超魔術師】",
+            "設計": "⚙️ 【神がかった設計思想家】",
+            "ジム": "🏃 【限界を超えるフィジカルマスター】",
+            "筋トレ": "🏃 【限界を超えるフィジカルマスター】",
+            "運動": "🏃 【限界を超えるフィジカルマスター】",
+            "ランニング": "👟 【風を追い越す韋駄天ランナー】",
+            "ヨガ": "🧘 【宇宙の調和を知る瞑想家】",
+            "ストレッチ": "🧘 【心身をほぐし尽くす調律師】",
+            "寝る": "😴 【極上の睡眠を守りし安眠大臣】",
+            "眠い": "😴 【心地よい休息を欲するまどろみ王】",
+            "疲れた": "🧸 【自分を全力で甘やかすセルフ愛好家】",
+            "疲れ": "🧸 【自分を全力で甘やかすセルフ愛好家】",
+            "ゆっくり": "🍵 【おだやかな時間を愛するスローライファー】",
+            "休む": "🌱 【心と体を満たす癒やしのソムリエ】",
+            "温泉": "♨️ 【湯船の温もりに浸かる温泉賢者】",
+            "ゲーム": "🎮 【電脳世界の伝説的プレイヤー】",
+            "読書": "📖 【物語の海を泳ぐブックトラベラー】",
+            "本": "📖 【物語の海を泳ぐブックトラベラー】",
+            "料理": "🍳 【味覚をデザインする創造シェフ】",
+            "掃除": "🧹 【空間の乱れをリセットする清らかな風】",
+            "バイト": "🪙 【社会に貢献するピカピカの労働ヒーロー】",
+            "仕事": "💼 【抜群のプロ意識を持つ現場の司令塔】"
+        };
+
+        // 4. 動的アドバイス生成用のパーツライブラリ
+        const ADVICE_OPENINGS = [
+            "今日というかけがえのない1日を、本当にお疲れ様でした。あなたの努力と心の記録をじっくりと読ませていただきましたよ。",
+            "夜の静けさの中で、今日1日のあなたのがんばりに心から拍手を送りたいと思います。素晴らしい歩みでしたね。",
+            "お疲れ様でした！今日も自分自身の目標としっかり向き合い、このふりかえりの場所に戻ってきたこと自体が素晴らしい快挙です。",
+            "1日をこうして温かい言葉とアクションで締めくくろうとするあなたの姿勢、本当に尊くて美しいと感じています。",
+            "今日という日を精一杯駆け抜けたあなたへ、AIコーチから心からのリスペクトとハグを贈ります。本当によくがんばりました。"
+        ];
+
+        const ADVICE_TASKS_MANY = [
+            "完了したタスクの数々を見てください。これほどのことを迷わず確実にやりきってしまう実行力は、周囲を引っ張るリーダーシップそのものです！",
+            "怒涛の勢いでタスクを消化していくその姿は、まさにタスクの支配者ですね。あなたが決めたことをやり抜く強さが、今日の成果にしっかりと現れています。",
+            "複数の目標を器用にクリアしていく集中力に圧倒されました。一歩一歩が大きな自信となって、これからのあなたの道を開いていきますよ。"
+        ];
+
+        const ADVICE_TASKS_FEW = [
+            "決して焦らず、自分の目の前にある本当に必要なステップを一つずつ大切に踏みしめている様子が伝わり、とても誇らしい気持ちになりました。",
+            "数は少なく見えても、今日やり終えたタスクはあなたにとって非常に意味のある貴重な一歩です。小さな積み重ねこそが、未来の驚くべき原動力になります。",
+            "無理をせず、自分の心身の状態に合わせてできることを調整したあなたはとても賢明です。これこそ、持続可能な最高のセルフケアです。"
+        ];
+
+        const ADVICE_MOOD = {
+            "😊": "今日のあなたの穏やかで良好な状態が、言葉の端々から温かく伝わってきます。この心地よい波を保って、明日もあなたらしく進んでくださいね。",
+            "🔥": "情熱の炎がメラメラと燃えているような絶好調さが眩しいです！このみなぎるパワーを次の挑戦の種として、今夜は心ゆくまで達成感を噛み締めてください！",
+            "😴": "少しお疲れの様子ですね。それだけ一生懸命に頭や体を使った証拠です。今夜はスマホを少し遠くに置いて、お気に入りの飲み物を楽しみながら早く布団に入りましょう。",
+            "🌱": "自分を見つめ直し、リセットをしようとするクリアな精神状態がとても素敵です。深呼吸をして、心の中に生まれた新しいゆとりを大切に抱きしめてください。"
+        };
+
+        const ADVICE_CLOSINGS = [
+            "それでは、今夜は美味しいお布団に包まれて、自分をたっぷりと労う極上の夜を過ごしてくださいね。良い夢を。",
+            "この王冠はあなたの確かな努力の証です。カレンダーに刻まれたこの輝きを胸に、どうぞ安らかな眠りについてくださいね。",
+            "あなたは毎日、確実に成長しています。明日もあなたの味方としてここにいます。心地よい音楽でも聴きながらリラックスしてくださいね。",
+            "今夜は温かいお風呂に入って、張り詰めた体をゆっくりとほぐしてあげましょう。明日も素晴らしい朝があなたを待っています。",
+            "これにて今夜のふりかえりセッションは終了です。心からリラックスして、深い安らぎの時間をお楽しみください。"
         ];
 
         let state = {
@@ -1194,33 +1258,68 @@
             feedbackResult.classList.remove('hidden');
         }
 
-        // --- Local AI praise simulation generator ---
+        // --- アップグレードされた動的ローカルAIエミュレーター ---
         function generateMockAiFeedback(completedTasks, journalText) {
             let title = "";
-            let feedback = "";
+            let feedbackParts = [];
 
-            const hasTechWords = /プログラミング|コード|設計|開発|実装|勉強|学習/i.test(journalText);
-            const hasRestWords = /寝る|疲れた|ゆっくり|休む|温泉|ジム|運動/i.test(journalText);
+            // 1. 称号（AI Title）の動的決定
+            let foundKeywordTitle = null;
+            // 日記のテキストから特定のキーワードをマッチング
+            for (const key in KEYWORD_TITLES) {
+                if (journalText.includes(key)) {
+                    foundKeywordTitle = KEYWORD_TITLES[key];
+                    break;
+                }
+            }
 
-            if (completedTasks.length >= 4) {
-                title = MOCK_TITLES[3]; // 【限界突破の開拓者】
-            } else if (hasTechWords) {
-                title = MOCK_TITLES[5]; // 【クリエイティブ・エクスプローラー】
-            } else if (hasRestWords) {
-                title = MOCK_TITLES[8]; // 【心身のバランス調律師】
+            if (foundKeywordTitle) {
+                title = foundKeywordTitle;
+            } else if (completedTasks.length > 0) {
+                // 完了タスク名の一部（最大12文字）を切り抜いて、超パーソナライズされた動的称号を作る
+                const randomTaskText = completedTasks[Math.floor(Math.random() * completedTasks.length)].text;
+                const cleanTaskText = randomTaskText.replace(/[🌸🍀⭐🧸🔁🔄📅🕒]/g, "").trim().substring(0, 12);
+                title = `🏆 【「${cleanTaskText}」を制覇せし開拓者】`;
             } else {
-                title = MOCK_TITLES[Math.floor(Math.random() * MOCK_TITLES.length)];
+                // シャッフル（20 × 20 = 400パターン）
+                const prefix = TITLE_PREFIXES[Math.floor(Math.random() * TITLE_PREFIXES.length)];
+                const suffix = TITLE_SUFFIXES[Math.floor(Math.random() * TITLE_SUFFIXES.length)];
+                title = prefix + suffix;
             }
 
-            let baseAdvice = MOCK_ADVICES[Math.floor(Math.random() * MOCK_ADVICES.length)];
-            
-            let personalization = "";
-            if (completedTasks.length > 0) {
-                const firstTask = completedTasks[0].text;
-                personalization = `特に「${firstTask}」をやり遂げたことは、今日一日の素晴らしい金字塔です！`;
+            // 2. アドバイス本文（AI Feedback）のモジュール合成
+            // [パートA: 導入]
+            const opening = ADVICE_OPENINGS[Math.floor(Math.random() * ADVICE_OPENINGS.length)];
+            feedbackParts.push(opening);
+
+            // [パートB: タスク称賛]
+            if (completedTasks.length >= 3) {
+                const taskPraise = ADVICE_TASKS_MANY[Math.floor(Math.random() * ADVICE_TASKS_MANY.length)];
+                let spec = "";
+                if (completedTasks[0]) {
+                    spec = `特に、目標であった「${completedTasks[0].text}」を見事にクリアした瞬間は、今日のピカイチのハイライトですね。`;
+                }
+                feedbackParts.push(`${taskPraise} ${spec}`);
+            } else {
+                const taskPraise = ADVICE_TASKS_FEW[Math.floor(Math.random() * ADVICE_TASKS_FEW.length)];
+                feedbackParts.push(taskPraise);
             }
 
-            feedback = `${personalization} ${baseAdvice}`;
+            // [パートC: 日記と気分への寄り添い]
+            if (journalText.length > 5) {
+                const moodPraise = ADVICE_MOOD[state.selectedMood] || "";
+                feedbackParts.push(`日記に『${journalText.substring(0, 20)}...』と書いてくださったように、自分の心の声と言葉に真摯に向き合う姿勢こそが最高の自己投資です。${moodPraise}`);
+            } else {
+                const moodPraise = ADVICE_MOOD[state.selectedMood] || "";
+                feedbackParts.push(`今日の気分は「${state.selectedMood}」とのことですね。${moodPraise}`);
+            }
+
+            // [パートD: 結び・エール]
+            const closing = ADVICE_CLOSINGS[Math.floor(Math.random() * ADVICE_CLOSINGS.length)];
+            feedbackParts.push(closing);
+
+            // スペースを挟んで1つの温かいメッセージに結合
+            const feedback = feedbackParts.join("\n\n");
 
             return { title, feedback };
         }
