@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AuraFlow - カラフルパステルAIジャーナル</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -18,18 +18,19 @@
             font-family: 'Plus Jakarta Sans', 'Noto Sans JP', sans-serif;
             background: linear-gradient(135deg, #fff0f5 0%, #f0f8ff 50%, #f5fffa 100%); /* サクラピンク・アリスブルー・ミントグリーンの3色グラデーション */
             color: #334155; /* スモーキーチャコール */
+            -webkit-tap-highlight-color: transparent; /* モバイルのタップ青枠を消去 */
         }
         
         /* ぷるんとした質感のシャーベットガラスパネル */
         .glass-panel-blue {
-            background: rgba(240, 249, 255, 0.8); /* ベビーブルー */
+            background: rgba(240, 249, 255, 0.85); /* ベビーブルー */
             backdrop-filter: blur(12px);
             border: 2px solid rgba(186, 230, 253, 0.6);
             box-shadow: 0 8px 30px -5px rgba(186, 230, 253, 0.3);
         }
 
         .glass-panel-yellow {
-            background: rgba(254, 252, 226, 0.8); /* シトロンイエロー */
+            background: rgba(254, 252, 226, 0.85); /* シトロンイエロー */
             backdrop-filter: blur(12px);
             border: 2px solid rgba(254, 240, 138, 0.6);
             box-shadow: 0 8px 30px -5px rgba(254, 240, 138, 0.3);
@@ -67,28 +68,37 @@
         ::-webkit-scrollbar-thumb:hover {
             background: rgba(192, 132, 252, 0.7);
         }
+
+        /* モバイル用の快適なフォーム要素調整 */
+        input, select, textarea {
+            font-size: 16px !important; /* iOSでズームインが自動発生するのを防止する設定 */
+        }
     </style>
 </head>
 <body class="min-h-screen pb-12">
 
     <!-- ナビゲーションバー -->
-    <nav class="bg-white/60 backdrop-blur-md sticky top-0 z-40 border-b border-pink-100/60 px-4 py-3.5 mb-6">
-        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-pink-300 via-purple-300 to-indigo-300 flex items-center justify-center shadow-md shadow-purple-200">
+    <nav class="bg-white/60 backdrop-blur-md sticky top-0 z-40 border-b border-pink-100/60 px-4 py-3 mb-6">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-3">
+            <div class="flex items-center gap-3 w-full md:w-auto justify-center md:justify-start">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-pink-300 via-purple-300 to-indigo-300 flex items-center justify-center shadow-md shadow-purple-200 flex-shrink-0">
                     <i class="fa-solid fa-crown text-white text-lg animate-bounce-subtle"></i>
                 </div>
-                <div>
+                <div class="text-center md:text-left">
                     <h1 class="text-lg font-black tracking-tight bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 bg-clip-text text-transparent">AuraFlow</h1>
                     <p class="text-[10px] text-purple-400 font-bold uppercase tracking-wider">Macaron & Candy Self-Care Log</p>
                 </div>
             </div>
-            <div class="flex items-center gap-3 text-sm">
-                <!-- Streak flame -->
-                <div class="flex items-center gap-1 bg-amber-50 border border-amber-200/60 text-amber-600 px-3 py-1 rounded-full text-xs font-bold shadow-sm">
+            
+            <!-- スマホ用のフレックス調整付きヘッダー右側ボタン -->
+            <div class="flex flex-wrap items-center justify-center gap-2 text-sm w-full md:w-auto">
+                <div class="flex items-center gap-1 bg-amber-50 border border-amber-200/60 text-amber-600 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm">
                     <i class="fa-solid fa-fire text-amber-500"></i>
                     <span id="streak-count">0</span> 日連続
                 </div>
+                <button onclick="simulateNextDayTest()" class="flex items-center gap-1 bg-gradient-to-r from-yellow-100 to-orange-100 border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full text-xs font-bold hover:brightness-105 active:scale-95 transition-all shadow-sm cursor-pointer" title="リセットテスト">
+                    🌅 翌日動作テスト
+                </button>
             </div>
         </div>
     </nav>
@@ -98,9 +108,9 @@
         <!-- 左サイド：カレンダー ＆ これまでの軌跡 (4/12) -->
         <div class="lg:col-span-4 space-y-6">
             <!-- カレンダーコンポーネント (ベビーブルー) -->
-            <div class="glass-panel-blue rounded-3xl p-5">
+            <div class="glass-panel-blue rounded-3xl p-4 sm:p-5">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="font-bold text-sky-800 flex items-center gap-2">
+                    <h2 class="font-bold text-sky-800 flex items-center gap-2 text-sm sm:text-base">
                         <i class="fa-regular fa-calendar-star text-sky-500"></i>
                         がんばりの足跡
                     </h2>
@@ -108,14 +118,14 @@
                 </div>
                 
                 <!-- カレンダーグリッド -->
-                <div class="grid grid-cols-7 gap-1 text-center text-[11px] text-sky-400 font-bold mb-2">
+                <div class="grid grid-cols-7 gap-1 text-center text-[10px] sm:text-[11px] text-sky-400 font-bold mb-2">
                     <div class="text-rose-400">日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div class="text-sky-400">土</div>
                 </div>
                 <div class="grid grid-cols-7 gap-1.5" id="calendar-days">
                     <!-- JSで動的にカレンダーの日付と「王冠」ステータスを生成 -->
                 </div>
                 
-                <div class="mt-4 pt-3.5 border-t border-sky-200/50 flex items-center justify-between text-[11px] text-sky-600/80 font-bold">
+                <div class="mt-4 pt-3.5 border-t border-sky-200/50 flex items-center justify-between text-[10px] sm:text-[11px] text-sky-600/80 font-bold">
                     <div class="flex items-center gap-1.5">
                         <span class="w-5 h-5 rounded-lg bg-gradient-to-tr from-amber-200 to-yellow-100 border border-amber-300 flex items-center justify-center text-[10px] shadow-sm">👑</span>
                         <span>成果保存ずみ</span>
@@ -128,7 +138,7 @@
             </div>
 
             <!-- クイック統計 (シトロンイエロー) -->
-            <div class="glass-panel-yellow rounded-3xl p-5">
+            <div class="glass-panel-yellow rounded-3xl p-4 sm:p-5">
                 <h3 class="font-bold text-xs text-yellow-700 mb-3 flex items-center gap-1.5">
                     <i class="fa-solid fa-chart-line text-yellow-500"></i>
                     今月の成長サマリー
@@ -136,11 +146,11 @@
                 <div class="grid grid-cols-2 gap-3 text-center">
                     <div class="bg-white/80 border border-yellow-200/40 rounded-2xl p-3 shadow-sm">
                         <div class="text-[10px] text-yellow-600 font-bold">獲得した王冠</div>
-                        <div class="text-xl font-black text-amber-600 mt-1" id="stats-crowns">0 <span class="text-xs text-slate-400 font-medium">個</span></div>
+                        <div class="text-lg sm:text-xl font-black text-amber-600 mt-1" id="stats-crowns">0 <span class="text-xs text-slate-400 font-medium">個</span></div>
                     </div>
                     <div class="bg-white/80 border border-yellow-200/40 rounded-2xl p-3 shadow-sm">
                         <div class="text-[10px] text-yellow-600 font-bold">累計完了タスク</div>
-                        <div class="text-xl font-black text-emerald-600 mt-1" id="stats-tasks">0 <span class="text-xs text-slate-400 font-medium">個</span></div>
+                        <div class="text-lg sm:text-xl font-black text-emerald-600 mt-1" id="stats-tasks">0 <span class="text-xs text-slate-400 font-medium">個</span></div>
                     </div>
                 </div>
             </div>
@@ -150,17 +160,17 @@
         <div class="lg:col-span-8 space-y-6">
 
             <!-- 過去アーカイブ表示エリア（過去の日を選択した時に自動で出現） -->
-            <div id="archive-view" class="hidden bg-gradient-to-tr from-[#fdf4ff] via-[#fae8ff] to-[#f5f3ff] border-2 border-purple-200 rounded-3xl p-6 shadow-xl relative overflow-hidden">
+            <div id="archive-view" class="hidden bg-gradient-to-tr from-[#fdf4ff] via-[#fae8ff] to-[#f5f3ff] border-2 border-purple-200 rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden">
                 <div class="absolute -right-8 -top-8 w-32 h-32 bg-purple-200/30 rounded-full blur-2xl"></div>
-                <div class="flex justify-between items-start mb-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
                     <span class="px-3 py-1 rounded-full bg-purple-100 text-purple-700 border border-purple-200 text-xs font-bold flex items-center gap-1.5 shadow-sm">
                         👑 過去のアーカイブを呼び出し中
                     </span>
-                    <button onclick="backToToday()" class="text-xs font-bold text-slate-500 hover:text-slate-800 bg-white border border-slate-200 hover:border-slate-300 px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 shadow-sm">
+                    <button onclick="backToToday()" class="w-full sm:w-auto justify-center text-xs font-bold text-slate-500 hover:text-slate-800 bg-white border border-slate-200 hover:border-slate-300 px-3 py-2.5 sm:py-1.5 rounded-xl transition-all flex items-center gap-1.5 shadow-sm active:scale-95">
                         今日に戻る <i class="fa-solid fa-arrow-right"></i>
                     </button>
                 </div>
-                <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2 mb-2">
+                <h2 class="text-lg sm:text-xl font-bold text-slate-800 flex items-center gap-2 mb-2">
                     <span id="archive-date-title" class="text-purple-600">2026年6月22日</span> のふりかえり
                 </h2>
                 
@@ -175,24 +185,24 @@
                         </div>
                         <div class="bg-white/80 rounded-2xl p-4 border border-purple-100 shadow-sm">
                             <h4 class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-2 flex items-center gap-1"><i class="fa-solid fa-book-open text-sky-400"></i> この日のひとこと・日記</h4>
-                            <p class="text-xs text-slate-600 leading-relaxed italic" id="archive-diary">
+                            <p class="text-xs text-slate-600 leading-relaxed italic whitespace-pre-wrap" id="archive-diary">
                                 「今日は少し疲れていたけれど、タスクを終わらせることができて良かった。」
                             </p>
                         </div>
                     </div>
                     <!-- 右カラム：AIコーチのフィードバック -->
-                    <div class="bg-purple-50/50 border border-purple-100 rounded-2xl p-4 flex flex-col justify-between shadow-sm">
+                    <div class="bg-purple-50/50 border border-purple-100 rounded-2xl p-4 flex flex-col justify-between shadow-sm min-h-[160px]">
                         <div>
                             <div class="flex items-center gap-2 mb-2">
-                                <span class="w-6 h-6 rounded-lg bg-purple-100 border border-purple-200 flex items-center justify-center text-xs text-purple-700 font-bold">AI</span>
+                                <span class="w-6 h-6 rounded-lg bg-purple-100 border border-purple-200 flex items-center justify-center text-[10px] text-purple-700 font-bold">AI</span>
                                 <span class="text-xs font-bold text-purple-600">AIコーチから贈られた称号</span>
                             </div>
-                            <div class="text-sm font-bold text-purple-800 bg-white/85 border border-purple-200/50 px-2.5 py-1.5 rounded-xl inline-block mb-3" id="archive-title-badge">🏆 【限界突破の開拓者】</div>
-                            <p class="text-xs text-slate-500 font-medium leading-relaxed" id="archive-coach-feedback">
+                            <div class="text-xs sm:text-sm font-bold text-purple-800 bg-white/85 border border-purple-200/50 px-2.5 py-1.5 rounded-xl inline-block mb-3" id="archive-title-badge">🏆 【限界突破の開拓者】</div>
+                            <p class="text-xs text-slate-500 font-medium leading-relaxed whitespace-pre-wrap" id="archive-coach-feedback">
                                 あなたの素晴らしい集中力とコミットメントによって、タスクは見事に消化されました。この調子で一歩一歩進んでいきましょう！
                             </p>
                         </div>
-                        <div class="mt-4 pt-3 border-t border-purple-100/50 flex items-center justify-between text-[11px] text-slate-400 font-semibold">
+                        <div class="mt-4 pt-3 border-t border-purple-100/50 flex items-center justify-between text-[10px] text-slate-400 font-semibold">
                             <span>気分の記録: <span id="archive-emoji" class="text-sm">😊</span></span>
                             <span>保存日時: <span id="archive-saved-time">2026/06/23 21:00</span></span>
                         </div>
@@ -203,40 +213,40 @@
             <!-- メインワークエリア（今日の日付、または新規ふりかえり用） -->
             <div id="today-workspace" class="space-y-6">
                 <!-- 日付ヘッダーと今日のモチベーション -->
-                <div class="glass-panel-purple rounded-3xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div class="glass-panel-purple rounded-3xl p-5 sm:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <div class="text-[10px] text-purple-400 font-bold uppercase tracking-widest mb-1">Current Workspace</div>
-                        <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2" id="current-work-date">
+                        <h2 class="text-lg sm:text-xl font-bold text-slate-800 flex items-center gap-2 flex-wrap" id="current-work-date">
                             2026年 6月 23日 (火)
                             <span class="text-xs px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-500 border border-purple-200 font-bold">今日</span>
                         </h2>
                     </div>
                     <!-- 気分セレクト -->
-                    <div class="flex items-center gap-2 bg-white/60 p-1 rounded-2xl border border-purple-100">
+                    <div class="flex items-center gap-2 bg-white/60 p-1.5 rounded-2xl border border-purple-100 w-full md:w-auto justify-between md:justify-start">
                         <span class="text-[10px] text-slate-500 px-2 font-bold">今日の気分:</span>
-                        <div class="flex gap-1" id="mood-selectors">
-                            <button onclick="setMood('😊')" class="mood-btn w-8 h-8 rounded-xl flex items-center justify-center hover:bg-purple-100 transition-all text-sm border border-transparent" data-mood="😊" title="普通/良好">😊</button>
-                            <button onclick="setMood('🔥')" class="mood-btn w-8 h-8 rounded-xl flex items-center justify-center hover:bg-purple-100 transition-all text-sm border border-transparent" data-mood="🔥" title="絶好調/情熱的">🔥</button>
-                            <button onclick="setMood('😴')" class="mood-btn w-8 h-8 rounded-xl flex items-center justify-center hover:bg-purple-100 transition-all text-sm border border-transparent" data-mood="😴" title="お疲れ/眠い">😴</button>
-                            <button onclick="setMood('🌱')" class="mood-btn w-8 h-8 rounded-xl flex items-center justify-center hover:bg-purple-100 transition-all text-sm border border-transparent" data-mood="🌱" title="穏やか/リセット">🌱</button>
+                        <div class="flex gap-1.5" id="mood-selectors">
+                            <button onclick="setMood('😊')" class="mood-btn w-9 h-9 rounded-xl flex items-center justify-center hover:bg-purple-100 transition-all text-base border border-transparent" data-mood="😊" title="普通/良好">😊</button>
+                            <button onclick="setMood('🔥')" class="mood-btn w-9 h-9 rounded-xl flex items-center justify-center hover:bg-purple-100 transition-all text-base border border-transparent" data-mood="🔥" title="絶好調/情熱的">🔥</button>
+                            <button onclick="setMood('😴')" class="mood-btn w-9 h-9 rounded-xl flex items-center justify-center hover:bg-purple-100 transition-all text-base border border-transparent" data-mood="😴" title="お疲れ/眠い">😴</button>
+                            <button onclick="setMood('🌱')" class="mood-btn w-9 h-9 rounded-xl flex items-center justify-center hover:bg-purple-100 transition-all text-base border border-transparent" data-mood="🌱" title="穏やか/リセット">🌱</button>
                         </div>
                     </div>
                 </div>
 
                 <!-- 統合タスク管理セクション -->
-                <div class="glass-panel-purple rounded-3xl p-6 space-y-4">
-                    <div class="flex justify-between items-center border-b border-purple-100 pb-3">
-                        <h3 class="font-bold text-purple-800 flex items-center gap-2">
+                <div class="glass-panel-purple rounded-3xl p-5 sm:p-6 space-y-4">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-purple-100 pb-3 gap-2">
+                        <h3 class="font-bold text-purple-800 flex items-center gap-2 text-sm sm:text-base">
                             <i class="fa-solid fa-list-check"></i>
                             本日のTODO＆スケジュール
                         </h3>
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
                             <!-- Show timeline toggles -->
-                            <div class="flex items-center gap-1.5 bg-white/70 px-2.5 py-1 rounded-lg border border-purple-100 text-xs">
-                                <input type="checkbox" id="toggle-timeline-sync" class="rounded text-purple-500 focus:ring-purple-400" checked onchange="renderTodos()">
-                                <label for="toggle-timeline-sync" class="text-[10px] text-slate-500 font-bold cursor-pointer">🕒 予定もTODOに表示</label>
+                            <div class="flex items-center gap-1.5 bg-white/70 px-2.5 py-1.5 rounded-lg border border-purple-100 text-xs">
+                                <input type="checkbox" id="toggle-timeline-sync" class="w-4 h-4 rounded text-purple-500 focus:ring-purple-400 cursor-pointer" checked onchange="renderTodos()">
+                                <label for="toggle-timeline-sync" class="text-[10px] text-slate-500 font-bold cursor-pointer select-none">🕒 予定も表示</label>
                             </div>
-                            <span class="text-xs text-purple-600 font-bold bg-white px-2.5 py-1 rounded-lg border border-purple-100" id="todo-progress-text">完了 0 / 0</span>
+                            <span class="text-[10px] sm:text-xs text-purple-600 font-bold bg-white px-2.5 py-1.5 rounded-lg border border-purple-100" id="todo-progress-text">完了 0 / 0</span>
                         </div>
                     </div>
 
@@ -246,18 +256,18 @@
                     </div>
 
                     <!-- 新規タスク＆予定 統合追加フォーム -->
-                    <form onsubmit="addTask(event)" class="space-y-3 bg-white/60 p-4 rounded-2xl border border-purple-100">
-                        <div class="flex flex-col sm:flex-row gap-2">
-                            <input type="text" id="new-task-input" required placeholder="例: カフェで勉強する、12:00 ランチミーティング..." class="flex-1 bg-white border border-purple-100 rounded-xl px-4 py-2 text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:border-purple-300 transition-colors shadow-inner">
+                    <form onsubmit="addTask(event)" class="space-y-3 bg-white/60 p-3 sm:p-4 rounded-2xl border border-purple-100">
+                        <div class="flex flex-col gap-2">
+                            <input type="text" id="new-task-input" required placeholder="例: カフェで勉強する、12:00 ランチ..." class="w-full bg-white border border-purple-100 rounded-xl px-4 py-3 text-xs sm:text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:border-purple-300 transition-colors shadow-inner">
                             
-                            <div class="flex gap-2">
-                                <select id="new-task-tag" class="bg-white border border-purple-100 rounded-xl px-3 py-2 text-xs font-bold text-purple-700 focus:outline-none">
+                            <div class="grid grid-cols-2 gap-2">
+                                <select id="new-task-tag" class="w-full bg-white border border-purple-100 rounded-xl px-3 py-2.5 text-xs font-bold text-purple-700 focus:outline-none">
                                     <option value="🌸重要">🌸 重要</option>
                                     <option value="🍀習慣">🍀 習慣</option>
                                     <option value="⭐快速">⭐ 快速</option>
                                     <option value="🧸お気楽">🧸 お気楽</option>
                                 </select>
-                                <select id="new-task-repeat" class="bg-white border border-purple-100 rounded-xl px-3 py-2 text-xs font-bold text-purple-700 focus:outline-none">
+                                <select id="new-task-repeat" class="w-full bg-white border border-purple-100 rounded-xl px-3 py-2.5 text-xs font-bold text-purple-700 focus:outline-none">
                                     <option value="none">🔁 1回のみ</option>
                                     <option value="daily">🔄 毎日習慣</option>
                                     <option value="weekly">📅 毎週習慣</option>
@@ -266,13 +276,13 @@
                         </div>
 
                         <!-- 時間割設定の展開スイッチ -->
-                        <div class="flex flex-wrap justify-between items-center gap-2 pt-1">
-                            <label class="flex items-center gap-1.5 cursor-pointer text-[11px] text-slate-500 font-bold">
-                                <input type="checkbox" id="time-toggle" onchange="toggleTimePanel()" class="rounded border-purple-200 text-purple-500 focus:ring-purple-400">
+                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 pt-1">
+                            <label class="flex items-center gap-2 cursor-pointer text-[11px] text-slate-500 font-bold select-none py-1">
+                                <input type="checkbox" id="time-toggle" onchange="toggleTimePanel()" class="w-4 h-4 rounded border-purple-200 text-purple-500 focus:ring-purple-400">
                                 <span>🕒 スケジュール時間(タイムライン)を設定する</span>
                             </label>
 
-                            <button type="submit" class="bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-300 hover:opacity-90 text-white font-extrabold text-xs px-6 py-2.5 rounded-xl transition-all flex items-center gap-1.5 shadow-md shadow-purple-100">
+                            <button type="submit" class="w-full sm:w-auto bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-300 hover:opacity-90 text-white font-extrabold text-xs px-6 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-md shadow-purple-100 active:scale-95">
                                 <i class="fa-solid fa-plus"></i> 追加
                             </button>
                         </div>
@@ -281,11 +291,11 @@
                         <div id="time-select-panel" class="hidden grid grid-cols-2 gap-2 pt-2 border-t border-purple-100/50">
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-400 mb-1">開始時間</label>
-                                <input type="time" id="new-task-start" value="10:00" class="w-full bg-white border border-purple-100 rounded-lg p-1.5 text-xs">
+                                <input type="time" id="new-task-start" value="10:00" class="w-full bg-white border border-purple-100 rounded-lg p-2 text-xs">
                             </div>
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-400 mb-1">終了時間</label>
-                                <input type="time" id="new-task-end" value="11:00" class="w-full bg-white border border-purple-100 rounded-lg p-1.5 text-xs">
+                                <input type="time" id="new-task-end" value="11:00" class="w-full bg-white border border-purple-100 rounded-lg p-2 text-xs">
                             </div>
                         </div>
                     </form>
@@ -293,24 +303,24 @@
                     <!-- タスクリストヘッダー＆一括消去ボタン -->
                     <div class="flex justify-between items-center pt-2">
                         <span class="text-xs text-slate-400 font-bold">タスク一覧</span>
-                        <button id="clear-completed-btn" onclick="clearCompletedTasks()" class="hidden text-[10px] font-bold bg-rose-50 text-rose-500 hover:bg-rose-100 border border-rose-200 px-2.5 py-1.5 rounded-xl transition-all">
-                            <i class="fa-solid fa-trash-can mr-1"></i>完了したタスクを消去
+                        <button id="clear-completed-btn" onclick="clearCompletedTasks()" class="hidden text-[10px] font-bold bg-rose-50 text-rose-500 hover:bg-rose-100 border border-rose-200 px-3 py-2 rounded-xl transition-all active:scale-95">
+                            <i class="fa-solid fa-trash-can mr-1"></i>完了を一括消去
                         </button>
                     </div>
 
                     <!-- タスクリスト -->
-                    <div class="space-y-2 mt-2" id="task-list">
+                    <div class="space-y-2.5 mt-2" id="task-list">
                         <!-- 動的にTODO項目を注入 -->
                     </div>
                 </div>
 
                 <!-- インライン編集フォーム (必要な時だけポップアップ) -->
-                <div id="inline-editor" class="hidden glass-panel-purple rounded-3xl p-5 border-2 border-pink-200 shadow-xl space-y-3">
+                <div id="inline-editor" class="hidden glass-panel-purple rounded-3xl p-4 sm:p-5 border-2 border-pink-200 shadow-xl space-y-3">
                     <div class="flex justify-between items-center border-b border-purple-100 pb-2">
                         <h4 class="text-xs font-black text-purple-800 flex items-center gap-1.5">
                             <i class="fa-solid fa-pen-to-square"></i> タスクの編集
                         </h4>
-                        <button onclick="closeEditor()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+                        <button onclick="closeEditor()" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
                     </div>
                     
                     <input type="hidden" id="edit-id">
@@ -318,12 +328,12 @@
                     <div class="space-y-3">
                         <div>
                             <label class="block text-[10px] font-bold text-slate-400 mb-1">タスク名</label>
-                            <input type="text" id="edit-text" class="w-full bg-white border border-purple-100 rounded-xl p-2.5 text-xs text-slate-700">
+                            <input type="text" id="edit-text" class="w-full bg-white border border-purple-100 rounded-xl p-3 text-xs sm:text-sm text-slate-700">
                         </div>
                         <div class="grid grid-cols-2 gap-2">
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-400 mb-1">バッジ</label>
-                                <select id="edit-tag" class="w-full bg-white border border-purple-100 rounded-xl p-2 text-xs font-bold text-purple-700">
+                                <select id="edit-tag" class="w-full bg-white border border-purple-100 rounded-xl p-2.5 text-xs font-bold text-purple-700">
                                     <option value="🌸重要">🌸 重要</option>
                                     <option value="🍀習慣">🍀 習慣</option>
                                     <option value="⭐快速">⭐ 快速</option>
@@ -332,7 +342,7 @@
                             </div>
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-400 mb-1">繰り返し</label>
-                                <select id="edit-repeat" class="w-full bg-white border border-purple-100 rounded-xl p-2 text-xs font-bold text-purple-700">
+                                <select id="edit-repeat" class="w-full bg-white border border-purple-100 rounded-xl p-2.5 text-xs font-bold text-purple-700">
                                     <option value="none">🔁 1回のみ</option>
                                     <option value="daily">🔄 毎日習慣</option>
                                     <option value="weekly">📅 毎週習慣</option>
@@ -344,46 +354,46 @@
                         <div class="grid grid-cols-2 gap-2 border-t border-purple-100/50 pt-2">
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-400 mb-1">開始（空欄でタスク化）</label>
-                                <input type="time" id="edit-start" class="w-full bg-white border border-purple-100 rounded-lg p-1.5 text-xs">
+                                <input type="time" id="edit-start" class="w-full bg-white border border-purple-100 rounded-lg p-2 text-xs">
                             </div>
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-400 mb-1">終了</label>
-                                <input type="time" id="edit-end" class="w-full bg-white border border-purple-100 rounded-lg p-1.5 text-xs">
+                                <input type="time" id="edit-end" class="w-full bg-white border border-purple-100 rounded-lg p-2 text-xs">
                             </div>
                         </div>
 
                         <div class="flex justify-end gap-2 pt-2">
-                            <button type="button" onclick="closeEditor()" class="bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold text-xs px-4 py-2 rounded-xl transition-all">キャンセル</button>
-                            <button type="button" onclick="saveEditedTask()" class="bg-gradient-to-r from-pink-300 to-purple-300 text-white font-extrabold text-xs px-5 py-2 rounded-xl transition-all shadow">保存</button>
+                            <button type="button" onclick="closeEditor()" class="bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold text-xs px-4 py-2.5 rounded-xl transition-all">キャンセル</button>
+                            <button type="button" onclick="saveEditedTask()" class="bg-gradient-to-r from-pink-300 to-purple-300 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl transition-all shadow">保存</button>
                         </div>
                     </div>
                 </div>
 
                 <!-- 1日の終わりのふりかえり・締めくくり -->
-                <div id="journal-section" class="glass-panel-purple rounded-3xl p-6 space-y-4 border border-pink-200">
-                    <h3 class="font-bold text-purple-800 flex items-center gap-2">
+                <div id="journal-section" class="glass-panel-purple rounded-3xl p-5 sm:p-6 space-y-4 border border-pink-200">
+                    <h3 class="font-bold text-purple-800 flex items-center gap-2 text-sm sm:text-base">
                         <i class="fa-solid fa-pen-fancy text-purple-500"></i>
                         今日の締めくくり・ジャーナル
                     </h3>
-                    <p class="text-xs text-slate-400 font-semibold">
+                    <p class="text-xs text-slate-400 font-semibold leading-relaxed">
                         今日1日の成果、学んだこと、または自分への労いの言葉を1行でも良いので書き残しましょう。
                     </p>
                     
-                    <textarea id="today-journal-input" rows="3" placeholder="ここに入力した日記やタスクの内容をもとに、AIコーチが今夜の「あなただけの称号」と「ふりかえりアドバイス」を自動生成します。" class="w-full bg-white/80 border border-purple-100 rounded-2xl p-3.5 text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:border-purple-300 transition-colors resize-none shadow-inner"></textarea>
+                    <textarea id="today-journal-input" rows="3" placeholder="ここに入力した日記やタスクの内容をもとに、AIコーチが今夜の「あなただけの称号」と「ふりかえりアドバイス」を自動生成します。" class="w-full bg-white/80 border border-purple-100 rounded-2xl p-3.5 text-xs sm:text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:border-purple-300 transition-colors resize-none shadow-inner leading-relaxed"></textarea>
 
-                    <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2">
+                    <div class="flex flex-col gap-3 pt-2">
                         <div class="text-[11px] text-purple-600 font-semibold flex items-center gap-1.5">
-                            <i class="fa-solid fa-circle-info"></i>
+                            <i class="fa-solid fa-circle-info flex-shrink-0"></i>
                             <span>保存すると、左側のカレンダーに王冠（👑）が残ります。</span>
                         </div>
-                        <button onclick="triggerCeremony()" class="bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-300 hover:opacity-90 text-white font-extrabold text-xs px-6 py-3.5 rounded-2xl transition-all duration-300 transform active:scale-95 flex items-center justify-center gap-2 shadow-md shadow-purple-100">
+                        <button onclick="triggerCeremony()" class="w-full bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-300 hover:opacity-90 text-white font-extrabold text-xs sm:text-sm px-6 py-4 rounded-2xl transition-all duration-300 transform active:scale-95 flex items-center justify-center gap-2 shadow-md shadow-purple-100">
                             👑 今日の成果をカレンダーに保存する
                         </button>
                     </div>
                 </div>
 
                 <!-- ローカルAI分析中ローダー -->
-                <div id="ai-loader" class="hidden glass-panel-purple rounded-3xl p-8 text-center space-y-4 border border-pink-200">
+                <div id="ai-loader" class="hidden glass-panel-purple rounded-3xl p-6 sm:p-8 text-center space-y-4 border border-pink-200">
                     <div class="flex justify-center">
                         <div class="relative w-16 h-16">
                             <div class="absolute inset-0 rounded-full border-4 border-purple-100"></div>
@@ -391,17 +401,17 @@
                         </div>
                     </div>
                     <div>
-                        <h4 class="text-sm font-bold text-purple-700">AIコーチ、今日のあなたの努力を分析中... ✨</h4>
-                        <p class="text-[11px] text-slate-400 mt-1 font-medium">タスクの達成状況とジャーナルを読み込んで、極上の称賛メッセージを綴っています。</p>
+                        <h4 class="text-sm sm:text-base font-bold text-purple-700">AIコーチ、今日のあなたの努力を分析中... ✨</h4>
+                        <p class="text-[11px] text-slate-400 mt-1 font-medium leading-relaxed">タスクの達成状況とジャーナルを読み込んで、極上の称賛メッセージを綴っています。</p>
                     </div>
                 </div>
 
                 <!-- AIコーチ本日の称賛フィードバック結果 -->
-                <div id="ai-feedback-result" class="hidden bg-gradient-to-tr from-pink-50 via-purple-50 to-sky-50 border border-purple-200 rounded-3xl p-6 shadow-lg relative overflow-hidden">
+                <div id="ai-feedback-result" class="hidden bg-gradient-to-tr from-pink-50 via-purple-50 to-sky-50 border border-purple-200 rounded-3xl p-5 sm:p-6 shadow-lg relative overflow-hidden">
                     <div class="absolute right-0 bottom-0 opacity-10 pointer-events-none">
                         <i class="fa-solid fa-trophy text-8xl text-purple-300"></i>
                     </div>
-                    <div class="flex items-center justify-between mb-4">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-4 border-b border-purple-100/60 pb-3">
                         <span class="px-3 py-1 rounded-full bg-purple-100 text-purple-700 border border-purple-200/50 text-[10px] font-bold flex items-center gap-1.5 shadow-sm">
                             ✨ 今日のAIコーチング完了！
                         </span>
@@ -410,16 +420,18 @@
                     
                     <div class="space-y-3">
                         <div class="text-[10px] text-purple-500 font-bold uppercase tracking-wider">AIがあなたに授けた最高の称号</div>
-                        <h3 class="text-base font-extrabold text-purple-700 bg-white/90 border border-purple-200 px-3 py-2 rounded-xl inline-flex items-center gap-2" id="feedback-title">
-                            🏆 【不屈のチャレンジャー】
-                        </h3>
-                        <p class="text-xs text-slate-600 font-medium leading-relaxed pt-2 border-t border-purple-100" id="feedback-body">
+                        <div>
+                            <h3 class="text-sm sm:text-base font-extrabold text-purple-700 bg-white/90 border border-purple-200 px-3 py-2 rounded-xl inline-flex items-center gap-2 shadow-sm" id="feedback-title">
+                                🏆 【不屈のチャレンジャー】
+                            </h3>
+                        </div>
+                        <p class="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed pt-2" id="feedback-body">
                             素晴らしい一日でしたね！予定していたタスクをすべてやり遂げ、さらに日記で自分を見つめ直す姿勢はまさに一流です。この前進は決して無駄にはなりません。
                         </p>
                     </div>
 
-                    <div class="mt-5 pt-4 border-t border-purple-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                        <div class="text-[10px] text-slate-400 font-semibold">
+                    <div class="mt-5 pt-4 border-t border-purple-100/60 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <div class="text-[10px] text-slate-400 font-semibold leading-relaxed">
                             ※このふりかえりデータはカレンダーの該当日に保存されました。明日になってもカレンダーからいつでも確認できます。
                         </div>
                     </div>
@@ -431,9 +443,9 @@
     </main>
 
     <!-- カスタム通知トースト -->
-    <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-white border border-purple-200/80 text-slate-700 px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3">
-        <span class="text-purple-500" id="toast-icon">✨</span>
-        <span class="text-xs font-bold" id="toast-message">メッセージです</span>
+    <div id="toast" class="fixed bottom-6 left-4 right-4 sm:left-auto sm:right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-white border border-purple-200/80 text-slate-700 px-4 py-3.5 rounded-2xl shadow-xl flex items-center gap-3 max-w-sm mx-auto sm:mx-0">
+        <span class="text-purple-500 text-base" id="toast-icon">✨</span>
+        <span class="text-xs sm:text-sm font-bold leading-normal" id="toast-message">メッセージです</span>
     </div>
 
     <script>
@@ -448,22 +460,18 @@
                 const now = audioCtx.currentTime;
                 
                 if (type === 'add') {
-                    // Sweet high organic note
                     playTone(523.25, 0.1, now, 'sine', 0.08); // C5
                     playTone(659.25, 0.15, now + 0.04, 'sine', 0.05); // E5
                 } else if (type === 'complete') {
-                    // Beautiful macaron crystal sparkle (Major 7th chord)
                     playTone(349.23, 0.4, now, 'sine', 0.04); // F4
                     playTone(440.00, 0.4, now + 0.03, 'sine', 0.04); // A4
                     playTone(523.25, 0.5, now + 0.06, 'sine', 0.04); // C5
                     playTone(659.25, 0.6, now + 0.09, 'sine', 0.03); // E5
                     playTone(783.99, 0.7, now + 0.12, 'sine', 0.02); // G5
                 } else if (type === 'delete') {
-                    // Gentle bubbly drop
                     playTone(392.00, 0.15, now, 'triangle', 0.08);
                     playTone(261.63, 0.2, now + 0.05, 'triangle', 0.05);
                 } else if (type === 'crown') {
-                    // Royal grand fan-fare chime
                     const notes = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];
                     notes.forEach((f, i) => {
                         playTone(f, 0.8, now + (i * 0.06), 'sine', 0.03);
@@ -492,8 +500,6 @@
         }
 
         // --- Application State & ローカルAI思考データベース ---
-        
-        // 1. 形容詞プレフィックス（20種類）
         const TITLE_PREFIXES = [
             "🏆 【爆速の", "👑 【絶対的な", "🌱 【マイペースな", "🚀 【次元を超える", "🛡️ 【鉄壁の", 
             "💡 【未来を照らす", "🎯 【百発百中の", "🌟 【銀河系最強の", "🍵 【至高の", "🌸 【優美なる",
@@ -501,7 +507,6 @@
             "🌈 【自由気ままな", "🐾 【お散歩気分の", "🧸 【癒やし度100%の", "💎 【輝きに満ちた", "🌊 【涼やかな"
         ];
 
-        // 2. 名詞サフィックス（20種類）
         const TITLE_SUFFIXES = [
             "タスクバスター】", "自己管理マスター】", "前進主義者】", "開拓者】", "ルーティン・ヒーロー】",
             "エクスプローラー】", "スナイパー】", "自己成長の星】", "ライフハッカー】", "バランサー】",
@@ -509,7 +514,6 @@
             "努力の天才】", "セルフケア達人】", "マイウェイランナー】", "癒やしスト】", "冒険家】"
         ];
 
-        // 3. 日記のキーワードに連動するプレミアム称号
         const KEYWORD_TITLES = {
             "勉強": "📚 【知の探求を極めし賢者】",
             "学習": "📚 【知の探求を極めし賢者】",
@@ -540,7 +544,6 @@
             "仕事": "💼 【抜群のプロ意識を持つ現場の司令塔】"
         };
 
-        // 4. 動的アドバイス生成用のパーツライブラリ
         const ADVICE_OPENINGS = [
             "今日というかけがえのない1日を、本当にお疲れ様でした。あなたの努力と心の記録をじっくりと読ませていただきましたよ。",
             "夜の静けさの中で、今日1日のあなたのがんばりに心から拍手を送りたいと思います。素晴らしい歩みでしたね。",
@@ -570,7 +573,7 @@
 
         const ADVICE_CLOSINGS = [
             "それでは、今夜は美味しいお布団に包まれて、自分をたっぷりと労う極上の夜を過ごしてくださいね。良い夢を。",
-            "この王冠はあなたの確かな努力の証です。カレンダーに刻まれたこの輝きを胸に、どうぞ安らかな眠りについてくださいね。",
+            "この王冠はあなたの確かな努力 of 証です。カレンダーに刻まれたこの輝きを胸に、どうぞ安らかな眠りについてくださいね。",
             "あなたは毎日、確実に成長しています。明日もあなたの味方としてここにいます。心地よい音楽でも聴きながらリラックスしてくださいね。",
             "今夜は温かいお風呂に入って、張り詰めた体をゆっくりとほぐしてあげましょう。明日も素晴らしい朝があなたを待っています。",
             "これにて今夜のふりかえりセッションは終了です。心からリラックスして、深い安らぎの時間をお楽しみください。"
@@ -586,7 +589,6 @@
             lastSavedDateStr: ""     // YYYY-MM-DD
         };
 
-        // Badge Styling Classes
         const tagStyles = {
             "🌸重要": "bg-rose-100 border-rose-200 text-rose-700",
             "🍀習慣": "bg-emerald-100 border-emerald-200 text-emerald-700",
@@ -594,7 +596,6 @@
             "🧸お気楽": "bg-orange-100 border-orange-200 text-orange-700"
         };
 
-        // --- App Loading & Date Initializers ---
         window.onload = function() {
             loadFromLocalStorage();
             checkAndResetForNewDay();
@@ -603,28 +604,26 @@
             renderStats();
             setMood('😊');
             
-            // Starter tasks if empty
             if (state.todos.length === 0) {
                 const todayStr = formatDateKey(state.todayDate);
                 state.todos = [
-                    { id: 1, text: "今日のタスクを完了させてみる", completed: false, tag: "🌸重要", repeat: "none", date: todayStr },
-                    { id: 2, text: "ジャーナル（ひとこと日記）を書いてみる", completed: false, tag: "🍀習慣", repeat: "daily", date: todayStr },
-                    { id: 3, text: "カレンダーに本日の成果を「保存」する", completed: false, tag: "⭐快速", repeat: "none", date: todayStr }
+                    { id: 1, text: "スマホでお気に入りのタスクを登録してみる", completed: false, tag: "🌸重要", repeat: "none", date: todayStr },
+                    { id: 2, text: "ジャーナル（ひとこと日記）をスマホで書いてみる", completed: false, tag: "🍀習慣", repeat: "daily", date: todayStr },
+                    { id: 3, text: "カレンダーに本日の成果を「保存」して王冠を得る", completed: false, tag: "⭐快速", repeat: "none", date: todayStr }
                 ];
                 saveToLocalStorage();
                 renderTodos();
             }
 
+            // モバイル下書き保存用リスナー
             document.getElementById('today-journal-input').addEventListener('input', (e) => {
-                const todayKey = formatDateKey(state.todayDate);
-                // 今日がまだ保存されていない場合のみ下書きを一時保存
-                if (!state.archive[todayKey]) {
-                    localStorage.setItem('ai_macaron_temp_draft', e.target.value);
+                const selectedKey = formatDateKey(state.currentDate);
+                if (!state.archive[selectedKey]) {
+                    localStorage.setItem(`ai_macaron_draft_${selectedKey}`, e.target.value);
                 }
             });
         };
 
-        // --- LocalStorage persistence ---
         function loadFromLocalStorage() {
             const savedArchive = localStorage.getItem('ai_macaron_archive');
             if (savedArchive) {
@@ -652,40 +651,41 @@
             localStorage.setItem('ai_macaron_last_saved_date', state.lastSavedDateStr);
         }
 
-        // --- Handling New Day Auto Cleanups ---
         function checkAndResetForNewDay() {
             const lastActive = localStorage.getItem('ai_macaron_last_active_day');
             const todayKey = formatDateKey(state.todayDate);
 
             if (lastActive && lastActive !== todayKey) {
-                // Another day! Perform cleanups
-                let remainingTodos = [];
-                let resetCount = 0;
-
-                state.todos.forEach(todo => {
-                    // Check if habit (daily/weekly) or non-completed task
-                    if (todo.repeat === 'daily' || todo.repeat === 'weekly') {
-                        // Keep and reset to incomplete
-                        todo.completed = false;
-                        remainingTodos.push(todo);
-                        resetCount++;
-                    } else if (!todo.completed) {
-                        // Keep non-completed 1-time tasks
-                        remainingTodos.push(todo);
-                    }
-                    // Completed 1-time tasks are automatically purged (archived in historical logs)
-                });
-
-                state.todos = remainingTodos;
-                saveToLocalStorage();
-
-                if (resetCount > 0) {
-                    setTimeout(() => {
-                        showToast(`🌅 新しい一日！${resetCount}個の習慣タスクを元気にリセットしました`, "crown");
-                    }, 1000);
-                }
+                performNewDayReset();
             }
             localStorage.setItem('ai_macaron_last_active_day', todayKey);
+        }
+
+        function performNewDayReset() {
+            let remainingTodos = [];
+            let resetCount = 0;
+
+            state.todos.forEach(todo => {
+                if (todo.repeat === 'daily' || todo.repeat === 'weekly') {
+                    todo.completed = false; // 繰り返しは未完了に
+                    remainingTodos.push(todo);
+                    resetCount++;
+                } else if (!todo.completed) {
+                    remainingTodos.push(todo); // 未完了単発はそのまま持ち越し
+                }
+            });
+
+            state.todos = remainingTodos;
+            saveToLocalStorage();
+            return resetCount;
+        }
+
+        // 🌅 「翌日の動作テスト」ボタンが押された時用の疑似処理
+        function simulateNextDayTest() {
+            const resetCount = performNewDayReset();
+            renderTodos();
+            playSound('complete');
+            showToast(`🌅 日付が切り替わりました！${resetCount}個の習慣チェックがリセットされました`, "crown");
         }
 
         function updateStreakDisplay() {
@@ -702,7 +702,6 @@
             }
         }
 
-        // --- Rendering the Calendar Days ---
         function renderCalendar() {
             const calendarDays = document.getElementById('calendar-days');
             const monthYearHeader = document.getElementById('calendar-month-year');
@@ -715,13 +714,12 @@
 
             monthYearHeader.textContent = `${year}年 ${month + 1}月`;
 
-            // Offset Monday first or standard Sunday first index
             const firstDayIndex = new Date(year, month, 1).getDay();
             const lastDay = new Date(year, month + 1, 0).getDate();
 
             for (let i = 0; i < firstDayIndex; i++) {
                 const emptyCell = document.createElement('div');
-                emptyCell.className = 'py-2';
+                emptyCell.className = 'py-1 sm:py-2';
                 calendarDays.appendChild(emptyCell);
             }
 
@@ -736,16 +734,14 @@
                 dayBtn.type = 'button';
                 dayBtn.onclick = () => selectDate(dayDate);
 
-                dayBtn.className = 'py-2 rounded-2xl flex flex-col items-center justify-between min-h-[50px] transition-all relative border ';
+                // スマホ用にタップエリアとマージンを調整
+                dayBtn.className = 'py-1.5 sm:py-2 rounded-2xl flex flex-col items-center justify-between min-h-[46px] sm:min-h-[50px] transition-all relative border ';
 
                 if (hasArchive) {
-                    // Golden Honey gradient for saved crowns
                     dayBtn.className += ' bg-gradient-to-tr from-[#fecdd3] to-[#fed7aa] border-[#fde047] text-[#854d0e] hover:brightness-105 shadow-sm ';
                 } else if (isToday) {
-                    // Soft pink for active system today
                     dayBtn.className += ' bg-[#fff5f6] border-[#ffccd5] text-[#db2777] hover:bg-[#ffe4e6] ';
                 } else {
-                    // Normal pastel white/blue
                     dayBtn.className += ' bg-white border-sky-100 text-sky-800 hover:bg-sky-50 ';
                 }
 
@@ -759,7 +755,7 @@
                 dayBtn.appendChild(dayNumSpan);
 
                 const indicatorSpan = document.createElement('span');
-                indicatorSpan.className = 'text-[11px] leading-none mt-0.5';
+                indicatorSpan.className = 'text-[10px] sm:text-[11px] leading-none mt-0.5';
                 if (hasArchive) {
                     indicatorSpan.textContent = '👑';
                 } else {
@@ -772,7 +768,6 @@
             }
         }
 
-        // --- Stats Render ---
         function renderStats() {
             const keys = Object.keys(state.archive);
             document.getElementById('stats-crowns').innerHTML = `${keys.length} <span class="text-xs text-slate-400">個</span>`;
@@ -787,58 +782,61 @@
             document.getElementById('stats-tasks').innerHTML = `${totalTasks} <span class="text-xs text-slate-400 font-bold">個</span>`;
         }
 
-        // --- Date Selector Action ---
         function selectDate(date) {
             state.currentDate = date;
             renderCalendar();
 
             const dateKey = formatDateKey(date);
             const todayKey = formatDateKey(state.todayDate);
+            const journalSection = document.getElementById('journal-section');
 
-            // 1. 今日（System Today）を選択した場合
-            if (dateKey === todayKey) {
-                hideArchiveView(); // 「過去アーカイブ呼び出し中」表示を必ず閉じる
+            if (state.archive[dateKey]) {
+                showArchiveView(dateKey);
+                if (journalSection) journalSection.classList.add('hidden');
+            } else {
+                hideArchiveView();
                 document.getElementById('today-workspace').classList.remove('hidden');
-                document.getElementById('journal-section').classList.remove('hidden'); // 本日のジャーナルエリアを表示
-                
-                document.getElementById('current-work-date').innerHTML = `
-                    ${formatDateString(date)}
-                    <span class="text-xs px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-500 border border-purple-200 font-bold">今日</span>
-                `;
-                
-                // すでに今日の分のログが保存されている場合は、日記や気分、AIフィードバック結果を連動表示する
-                if (state.archive[dateKey]) {
-                    showSavedAiFeedback(state.archive[dateKey]);
-                    document.getElementById('today-journal-input').value = state.archive[dateKey].journal || '';
-                    if (state.archive[dateKey].mood) {
-                        setMood(state.archive[dateKey].mood);
+
+                // 今日または今日以前の未保存日のみジャーナルを表示、未来は非表示
+                if (dateKey <= todayKey) {
+                    if (journalSection) {
+                        journalSection.classList.remove('hidden');
+                        const journalTitle = journalSection.querySelector('h3');
+                        if (journalTitle) {
+                            const formatted = formatDateString(date);
+                            journalTitle.innerHTML = `<i class="fa-solid fa-pen-fancy text-purple-500"></i> ${formatted} の締めくくり`;
+                        }
                     }
-                } else {
-                    // まだ保存していない場合は、一時保存されている下書きを自動復元する
-                    const tempDraft = localStorage.getItem('ai_macaron_temp_draft') || '';
-                    document.getElementById('today-journal-input').value = tempDraft;
-                    document.getElementById('ai-feedback-result').classList.add('hidden');
-                }
-                renderTodos();
-            } 
-            // 2. 今日以外の日付を選択した場合
-            else {
-                if (state.archive[dateKey]) {
-                    // アーカイブデータがある場合は、読み取り専用のタイムトラベル画面を出す
-                    showArchiveView(dateKey);
-                } else {
-                    // ログがない過去・未来の日の場合は、通常のワークスペースを「ログなし」として表示
-                    hideArchiveView();
-                    document.getElementById('today-workspace').classList.remove('hidden');
-                    document.getElementById('journal-section').classList.add('hidden'); // 今日以外（ログなし）はジャーナルエリアを非表示
                     
-                    document.getElementById('current-work-date').innerHTML = `
-                        ${formatDateString(date)}
-                        <span class="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-400 font-bold">ログなし</span>
-                    `;
-                    document.getElementById('ai-feedback-result').classList.add('hidden');
-                    renderTodos();
+                    // 下書き状態の復元
+                    const savedDraft = localStorage.getItem(`ai_macaron_draft_${dateKey}`) || '';
+                    document.getElementById('today-journal-input').value = savedDraft;
+
+                    const savedMood = localStorage.getItem(`ai_macaron_mood_${dateKey}`) || '😊';
+                    setMood(savedMood);
+                } else {
+                    if (journalSection) journalSection.classList.add('hidden');
                 }
+
+                const headerDate = document.getElementById('current-work-date');
+                if (dateKey === todayKey) {
+                    headerDate.innerHTML = `
+                        ${formatDateString(date)}
+                        <span class="text-xs px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-500 border border-purple-200 font-bold">今日</span>
+                    `;
+                } else if (dateKey < todayKey) {
+                    headerDate.innerHTML = `
+                        ${formatDateString(date)}
+                        <span class="text-xs px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-600 border border-amber-200 font-bold">未保存の過去日</span>
+                    `;
+                } else {
+                    headerDate.innerHTML = `
+                        ${formatDateString(date)}
+                        <span class="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-400 font-bold">未来の予定</span>
+                    `;
+                }
+
+                renderTodos();
             }
         }
 
@@ -878,7 +876,7 @@
         }
 
         function backToToday() {
-            state.todayDate = new Date(); // 最新の今日を取得
+            state.todayDate = new Date();
             selectDate(state.todayDate);
         }
 
@@ -892,16 +890,20 @@
 
         function setMood(emoji) {
             state.selectedMood = emoji;
+            const selectedKey = formatDateKey(state.currentDate);
+            if (!state.archive[selectedKey]) {
+                localStorage.setItem(`ai_macaron_mood_${selectedKey}`, emoji);
+            }
+            
             document.querySelectorAll('.mood-btn').forEach(btn => {
                 if (btn.getAttribute('data-mood') === emoji) {
-                    btn.className = 'mood-btn w-8 h-8 rounded-xl flex items-center justify-center bg-purple-100 text-purple-600 text-sm border border-purple-200/60 shadow-sm font-bold scale-110 transition-all';
+                    btn.className = 'mood-btn w-9 h-9 rounded-xl flex items-center justify-center bg-purple-100 text-purple-600 text-base border border-purple-200/60 shadow-sm font-bold scale-110 transition-all';
                 } else {
-                    btn.className = 'mood-btn w-8 h-8 rounded-xl flex items-center justify-center hover:bg-slate-100 transition-all text-sm border border-transparent text-slate-400';
+                    btn.className = 'mood-btn w-9 h-9 rounded-xl flex items-center justify-center hover:bg-slate-100 transition-all text-base border border-transparent text-slate-400';
                 }
             });
         }
 
-        // --- Managing Todo / Schedule Addition ---
         function addTask(event) {
             event.preventDefault();
             const input = document.getElementById('new-task-input');
@@ -915,12 +917,10 @@
             let start = null;
             let end = null;
 
-            // Check if user specified a manual time range via panel
             if (timeToggle.checked) {
                 start = document.getElementById('new-task-start').value;
                 end = document.getElementById('new-task-end').value;
             } else {
-                // Smart Time Parsing (e.g. "12:00-13:00 ミーティング" or "15:00 勉強")
                 const timeRegex = /(\d{1,2}):(\d{2})(?:\s*-\s*(\d{1,2}):(\d{2}))?/;
                 const match = text.match(timeRegex);
                 if (match) {
@@ -933,7 +933,6 @@
                         const endMin = match[4];
                         end = `${endHour}:${endMin}`;
                     } else {
-                        // Default to 1 hour after start
                         const nextHour = (parseInt(startHour, 10) + 1).toString().padStart(2, '0');
                         end = `${nextHour}:${startMin}`;
                     }
@@ -948,12 +947,11 @@
                 repeat: repeatSelect.value,
                 start: start,
                 end: end,
-                date: formatDateKey(state.currentDate) // 追加した時の「カレンダー選択日」に紐付ける
+                date: formatDateKey(state.currentDate)
             };
 
             state.todos.push(newTask);
             
-            // Clean up additions form
             input.value = '';
             timeToggle.checked = false;
             document.getElementById('time-select-panel').classList.add('hidden');
@@ -964,7 +962,6 @@
             showToast("📝 タスクを追加しました", "plus");
         }
 
-        // --- Rendering Todo & Schedule Items with Date Matching ---
         function renderTodos() {
             const taskList = document.getElementById('task-list');
             const clearBtn = document.getElementById('clear-completed-btn');
@@ -974,29 +971,22 @@
             taskList.innerHTML = '';
 
             const selectedDateStr = formatDateKey(state.currentDate);
-            const selectedDayOfWeek = state.currentDate.getDay(); // 0:日, 1:月, ...
+            const selectedDayOfWeek = state.currentDate.getDay();
 
-            // 現在選択されている日付にマッチするタスク、または繰り返し習慣タスクのみをフィルタリング
             let displayList = state.todos.filter(todo => {
                 const taskDateStr = todo.date || formatDateKey(state.todayDate);
 
-                // 1) 繰り返し設定がない場合、登録された日とカレンダーの選択日が一致するもののみ表示
                 if (todo.repeat === 'none') {
                     return taskDateStr === selectedDateStr;
                 }
-                
-                // 2) 毎日繰り返しの場合、タスクが作成された日以降のすべての日に表示
                 if (todo.repeat === 'daily') {
                     return selectedDateStr >= taskDateStr;
                 }
-
-                // 3) 毎週繰り返しの場合、タスクが作成された日以降かつ、選択された日と作成日の曜日が同じ日のみ表示
                 if (todo.repeat === 'weekly') {
                     if (selectedDateStr < taskDateStr) return false;
                     const createdDate = new Date(taskDateStr.replace(/-/g, '/'));
                     return createdDate.getDay() === selectedDayOfWeek;
                 }
-
                 return false;
             });
 
@@ -1006,7 +996,7 @@
 
             if (displayList.length === 0) {
                 taskList.innerHTML = `
-                    <div class="text-center py-6 text-xs text-slate-400 italic font-semibold">
+                    <div class="text-center py-8 text-xs text-slate-400 italic font-semibold">
                         登録されたTODOや予定はまだありません。
                     </div>
                 `;
@@ -1015,60 +1005,53 @@
                 return;
             }
 
-            // Check if any single completed task exists to toggle the manual sweep button
             const anyCompletedOneTime = displayList.some(t => t.completed && t.repeat === 'none');
             if (anyCompletedOneTime) {
-                clearBtn.classList.remove('shadow-sm');
                 clearBtn.classList.remove('hidden');
             } else {
                 clearBtn.classList.add('hidden');
             }
 
-            // Separate schedules (with start time) vs standard tasks, then sort schedule by timing
             const schedules = displayList.filter(t => t.start).sort((a, b) => a.start.localeCompare(b.start));
             const normalTasks = displayList.filter(t => !t.start);
-
-            // Re-combine: Schedule items on top (ordered by hours), then normal tasks
             const sortedItems = [...schedules, ...normalTasks];
 
             sortedItems.forEach(task => {
                 const item = document.createElement('div');
                 const badgeColorClass = tagStyles[task.tag] || "bg-purple-100 text-purple-700";
                 
-                // Color panel accent adjustments
                 let panelStyle = "bg-white border-purple-100 hover:border-purple-200";
                 if (task.completed) {
                     panelStyle = "bg-emerald-50/40 border-emerald-200/50 text-slate-400";
                 } else if (task.start) {
-                    // Highlight timeline items with delicate light blue gradient
                     panelStyle = "bg-gradient-to-r from-sky-50 to-white border-sky-100 hover:border-sky-200";
                 }
 
-                item.className = `flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-2xl border transition-all shadow-sm ${panelStyle} gap-2`;
+                // モバイル向けにパディングを増やし、タッチターゲットを拡大
+                item.className = `flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border transition-all shadow-sm ${panelStyle} gap-3`;
 
-                // Render dynamic time layout label
                 const timeLabel = task.start 
-                    ? `<span class="px-2 py-0.5 bg-sky-100 text-sky-700 text-[10px] font-black rounded-lg mr-1"><i class="fa-regular fa-clock"></i> ${task.start}${task.end ? ' - ' + task.end : ''}</span>`
+                    ? `<span class="px-2 py-0.5 bg-sky-100 text-sky-700 text-[9px] font-black rounded-lg mr-1"><i class="fa-regular fa-clock"></i> ${task.start}${task.end ? ' - ' + task.end : ''}</span>`
                     : '';
 
                 const repeatLabel = task.repeat !== 'none'
-                    ? `<span class="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-black rounded-lg mr-1"><i class="fa-solid fa-repeat"></i> ${task.repeat === 'daily' ? '毎日' : '毎週'}</span>`
+                    ? `<span class="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[9px] font-black rounded-lg mr-1"><i class="fa-solid fa-repeat"></i> ${task.repeat === 'daily' ? '毎日' : '毎週'}</span>`
                     : '';
 
                 item.innerHTML = `
-                    <div class="flex items-center gap-3 flex-1 cursor-pointer" onclick="toggleTask(${task.id})">
-                        <button type="button" class="w-5.5 h-5.5 rounded-lg flex items-center justify-center transition-all flex-shrink-0 ${
+                    <div class="flex items-start gap-3 flex-1 cursor-pointer" onclick="toggleTask(${task.id})">
+                        <button type="button" class="w-6 h-6 rounded-lg flex items-center justify-center transition-all flex-shrink-0 mt-0.5 ${
                             task.completed 
                                 ? 'bg-emerald-400 text-white shadow-sm' 
                                 : 'border-2 border-purple-200 hover:border-purple-300 bg-white'
                         }">
-                            ${task.completed ? '<i class="fa-solid fa-check text-[11px] font-bold"></i>' : ''}
+                            ${task.completed ? '<i class="fa-solid fa-check text-xs font-bold"></i>' : ''}
                         </button>
                         <div class="flex flex-col">
-                            <span class="text-xs font-semibold leading-normal ${task.completed ? 'line-through text-slate-400' : 'text-slate-700'}">
+                            <span class="text-xs sm:text-sm font-semibold leading-normal ${task.completed ? 'line-through text-slate-400' : 'text-slate-700'}">
                                 ${escapeHtml(task.text)}
                             </span>
-                            <div class="flex flex-wrap gap-1 mt-1">
+                            <div class="flex flex-wrap gap-1 mt-1.5">
                                 ${timeLabel}
                                 ${repeatLabel}
                                 <span class="px-2 py-0.5 rounded-lg border text-[9px] font-black ${badgeColorClass}">${task.tag}</span>
@@ -1076,12 +1059,12 @@
                         </div>
                     </div>
                     
-                    <div class="flex items-center justify-end gap-1">
-                        <!-- Convert task/schedule hours quick button -->
-                        <button onclick="event.stopPropagation(); openEditor(${task.id})" class="text-slate-400 hover:text-purple-500 p-1.5 hover:bg-purple-100/50 rounded-xl transition-colors" title="詳細編集">
+                    <div class="flex items-center justify-end gap-2 border-t border-dashed border-purple-100/50 sm:border-none pt-2 sm:pt-0">
+                        <!-- モバイル用にタップしやすいパディング付きアクションボタン -->
+                        <button onclick="event.stopPropagation(); openEditor(${task.id})" class="text-slate-400 hover:text-purple-500 p-2 hover:bg-purple-100/50 rounded-xl transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center" title="詳細編集">
                             <i class="fa-solid fa-pen text-xs"></i>
                         </button>
-                        <button onclick="event.stopPropagation(); deleteTask(${task.id})" class="text-slate-400 hover:text-rose-400 p-1.5 hover:bg-rose-50 rounded-xl transition-colors" title="削除">
+                        <button onclick="event.stopPropagation(); deleteTask(${task.id})" class="text-slate-400 hover:text-rose-400 p-2 hover:bg-rose-50 rounded-xl transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center" title="削除">
                             <i class="fa-regular fa-trash-can text-xs"></i>
                         </button>
                     </div>
@@ -1093,7 +1076,6 @@
             updateProgress(completedCount, displayList.length);
         }
 
-        // --- Managing Progress Updates & Sound Triggers ---
         function toggleTask(id) {
             state.todos = state.todos.map(task => {
                 if (task.id === id) {
@@ -1122,7 +1104,6 @@
         }
 
         function clearCompletedTasks() {
-            // Sweep all 1-time completed items out of list (as they are safely saved if today's ceremony is run)
             state.todos = state.todos.filter(t => !(t.completed && t.repeat === 'none'));
             saveToLocalStorage();
             renderTodos();
@@ -1154,7 +1135,6 @@
             editor.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
-        // --- Close Editor ---
         function closeEditor() {
             document.getElementById('inline-editor').classList.add('hidden');
         }
@@ -1193,7 +1173,27 @@
         // --- Handling Historical Ceremonies ---
         function triggerCeremony() {
             const journalText = document.getElementById('today-journal-input').value.trim();
-            const completedTasks = state.todos.filter(t => t.completed);
+            const selectedDateStr = formatDateKey(state.currentDate);
+            const selectedDayOfWeek = state.currentDate.getDay();
+
+            // 選択中の日付に属する、または適用されるタスクのスナップショットを作る
+            const dayTodos = state.todos.filter(todo => {
+                const taskDateStr = todo.date || formatDateKey(state.todayDate);
+                if (todo.repeat === 'none') {
+                    return taskDateStr === selectedDateStr;
+                }
+                if (todo.repeat === 'daily') {
+                    return selectedDateStr >= taskDateStr;
+                }
+                if (todo.repeat === 'weekly') {
+                    if (selectedDateStr < taskDateStr) return false;
+                    const createdDate = new Date(taskDateStr.replace(/-/g, '/'));
+                    return createdDate.getDay() === selectedDayOfWeek;
+                }
+                return false;
+            });
+
+            const completedTasks = dayTodos.filter(t => t.completed);
 
             if (completedTasks.length === 0 && !journalText) {
                 showToast("⚠️ 最低限1つのタスクを完了させるか、日記を記入してください！", "exclamation-circle");
@@ -1209,23 +1209,25 @@
 
             setTimeout(() => {
                 const response = generateMockAiFeedback(completedTasks, journalText);
-                const todayKey = formatDateKey(state.todayDate);
                 const nowStr = new Date().toLocaleString('ja-JP', { hour12: false });
                 
-                state.archive[todayKey] = {
+                // 現在カレンダーで選択している日付をキーとしてアーカイブに保存
+                state.archive[selectedDateStr] = {
                     mood: state.selectedMood,
-                    todos: [...state.todos],
+                    todos: dayTodos.map(t => ({ ...t })), // 深いクローンをして保存
                     journal: journalText || "（日記の記入なし。アクションだけで素晴らしい前進です！）",
                     aiTitle: response.title,
                     aiFeedback: response.feedback,
                     savedAt: nowStr
                 };
 
-                // 一時下書きデータをクリア
-                localStorage.removeItem('ai_macaron_temp_draft');
+                // 下書き削除
+                localStorage.removeItem(`ai_macaron_draft_${selectedDateStr}`);
+                localStorage.removeItem(`ai_macaron_mood_${selectedDateStr}`);
 
-                // Advance Streak logic (only once per day)
-                if (state.lastSavedDateStr !== todayKey) {
+                // 今日の保存時のみストリーク加算
+                const todayKey = formatDateKey(state.todayDate);
+                if (selectedDateStr === todayKey && state.lastSavedDateStr !== todayKey) {
                     state.streak += 1;
                     state.lastSavedDateStr = todayKey;
                 }
@@ -1243,7 +1245,7 @@
                 feedbackResult.classList.remove('hidden');
 
                 playSound('crown');
-                showToast("👑 今日の成果をカレンダーに保存しました！", "crown");
+                showToast("👑 成果をカレンダーに保存しました！", "crown");
                 triggerConfettiCelebrate();
                 feedbackResult.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
@@ -1258,14 +1260,11 @@
             feedbackResult.classList.remove('hidden');
         }
 
-        // --- アップグレードされた動的ローカルAIエミュレーター ---
         function generateMockAiFeedback(completedTasks, journalText) {
             let title = "";
             let feedbackParts = [];
 
-            // 1. 称号（AI Title）の動的決定
             let foundKeywordTitle = null;
-            // 日記のテキストから特定のキーワードをマッチング
             for (const key in KEYWORD_TITLES) {
                 if (journalText.includes(key)) {
                     foundKeywordTitle = KEYWORD_TITLES[key];
@@ -1276,23 +1275,18 @@
             if (foundKeywordTitle) {
                 title = foundKeywordTitle;
             } else if (completedTasks.length > 0) {
-                // 完了タスク名の一部（最大12文字）を切り抜いて、超パーソナライズされた動的称号を作る
                 const randomTaskText = completedTasks[Math.floor(Math.random() * completedTasks.length)].text;
                 const cleanTaskText = randomTaskText.replace(/[🌸🍀⭐🧸🔁🔄📅🕒]/g, "").trim().substring(0, 12);
                 title = `🏆 【「${cleanTaskText}」を制覇せし開拓者】`;
             } else {
-                // シャッフル（20 × 20 = 400パターン）
                 const prefix = TITLE_PREFIXES[Math.floor(Math.random() * TITLE_PREFIXES.length)];
                 const suffix = TITLE_SUFFIXES[Math.floor(Math.random() * TITLE_SUFFIXES.length)];
                 title = prefix + suffix;
             }
 
-            // 2. アドバイス本文（AI Feedback）のモジュール合成
-            // [パートA: 導入]
             const opening = ADVICE_OPENINGS[Math.floor(Math.random() * ADVICE_OPENINGS.length)];
             feedbackParts.push(opening);
 
-            // [パートB: タスク称賛]
             if (completedTasks.length >= 3) {
                 const taskPraise = ADVICE_TASKS_MANY[Math.floor(Math.random() * ADVICE_TASKS_MANY.length)];
                 let spec = "";
@@ -1305,7 +1299,6 @@
                 feedbackParts.push(taskPraise);
             }
 
-            // [パートC: 日記と気分への寄り添い]
             if (journalText.length > 5) {
                 const moodPraise = ADVICE_MOOD[state.selectedMood] || "";
                 feedbackParts.push(`日記に『${journalText.substring(0, 20)}...』と書いてくださったように、自分の心の声と言葉に真摯に向き合う姿勢こそが最高の自己投資です。${moodPraise}`);
@@ -1314,17 +1307,13 @@
                 feedbackParts.push(`今日の気分は「${state.selectedMood}」とのことですね。${moodPraise}`);
             }
 
-            // [パートD: 結び・エール]
             const closing = ADVICE_CLOSINGS[Math.floor(Math.random() * ADVICE_CLOSINGS.length)];
             feedbackParts.push(closing);
 
-            // スペースを挟んで1つの温かいメッセージに結合
             const feedback = feedbackParts.join("\n\n");
-
             return { title, feedback };
         }
 
-        // --- Helpers and Chime Animators ---
         function formatDateKey(date) {
             const y = date.getFullYear();
             const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -1350,7 +1339,6 @@
                 .replace(/'/g, "&#039;");
         }
 
-        // Custom Pastel Toasts
         let toastTimeout;
         function showToast(message, icon = "info") {
             const toast = document.getElementById('toast');
@@ -1375,7 +1363,6 @@
             }, 3000);
         }
 
-        // Confetti triggers
         function triggerConfettiParticle() {
             confetti({
                 particleCount: 30,
@@ -1385,7 +1372,6 @@
             });
         }
 
-        // Complete Confetti Celebration
         function triggerConfettiCelebrate() {
             var duration = 2 * 1000;
             var end = Date.now() + duration;
