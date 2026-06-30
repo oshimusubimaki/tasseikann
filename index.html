@@ -96,9 +96,6 @@
                     <i class="fa-solid fa-fire text-amber-500"></i>
                     <span id="streak-count">0</span> 日連続
                 </div>
-                <button onclick="simulateNextDayTest()" class="flex items-center gap-1 bg-gradient-to-r from-yellow-100 to-orange-100 border border-orange-200 text-orange-700 px-3 py-1.5 rounded-full text-xs font-bold hover:brightness-105 active:scale-95 transition-all shadow-sm cursor-pointer" title="リセットテスト">
-                    🌅 翌日動作テスト
-                </button>
             </div>
         </div>
     </nav>
@@ -114,7 +111,16 @@
                         <i class="fa-regular fa-calendar-star text-sky-500"></i>
                         がんばりの足跡
                     </h2>
-                    <div class="text-xs text-sky-700 font-bold bg-white/80 px-2.5 py-1 rounded-xl shadow-sm border border-sky-100" id="calendar-month-year">2026年 6月</div>
+                    <!-- 月切り替えボタンつきヘッダー -->
+                    <div class="flex items-center gap-1 bg-white/80 rounded-xl shadow-sm border border-sky-100 px-1 py-0.5">
+                        <button onclick="prevMonth()" class="w-6 h-6 flex items-center justify-center text-sky-600 hover:bg-sky-50 rounded-lg transition-colors cursor-pointer" title="前月へ">
+                            <i class="fa-solid fa-chevron-left text-xs"></i>
+                        </button>
+                        <div class="text-[11px] text-sky-700 font-bold px-1 select-none min-w-[70px] text-center" id="calendar-month-year">2026年 6月</div>
+                        <button onclick="nextMonth()" class="w-6 h-6 flex items-center justify-center text-sky-600 hover:bg-sky-50 rounded-lg transition-colors cursor-pointer" title="翌月へ">
+                            <i class="fa-solid fa-chevron-right text-xs"></i>
+                        </button>
+                    </div>
                 </div>
                 
                 <!-- カレンダーグリッド -->
@@ -680,12 +686,28 @@
             return resetCount;
         }
 
-        // 🌅 「翌日の動作テスト」ボタンが押された時用の疑似処理
-        function simulateNextDayTest() {
-            const resetCount = performNewDayReset();
-            renderTodos();
-            playSound('complete');
-            showToast(`🌅 日付が切り替わりました！${resetCount}個の習慣チェックがリセットされました`, "crown");
+        function prevMonth() {
+            updateCalendarMonth(-1);
+        }
+
+        function nextMonth() {
+            updateCalendarMonth(1);
+        }
+
+        function updateCalendarMonth(offset) {
+            const currentDay = state.currentDate.getDate();
+            const targetYear = state.currentDate.getFullYear();
+            const targetMonth = state.currentDate.getMonth() + offset;
+            
+            // 該当する月の最大日数を計算して丸める (例: 31日が翌月30日になるのを防ぐ)
+            const maxDaysInTargetMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+            const safeDay = Math.min(currentDay, maxDaysInTargetMonth);
+            
+            state.currentDate = new Date(targetYear, targetMonth, safeDay);
+            
+            renderCalendar();
+            selectDate(state.currentDate);
+            playSound('add');
         }
 
         function updateStreakDisplay() {
